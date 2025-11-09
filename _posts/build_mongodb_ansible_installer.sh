@@ -29,6 +29,20 @@ echo "[INFO] Creating: $INSTALL_DIR"
 mkdir -p $INSTALL_DIR/{playbooks,inventory,group_vars,templates}
 
 ################################################################################
+# ANSIBLE.CFG
+################################################################################
+echo "[INFO] Creating ansible.cfg..."
+cat > $INSTALL_DIR/ansible.cfg <<'EOF'
+[defaults]
+inventory = inventory/hosts
+host_key_checking = False
+interpreter_python = auto_silent
+
+[inventory]
+enable_plugins = ini, yaml
+EOF
+
+################################################################################
 # INVENTORY
 ################################################################################
 echo "[INFO] Creating inventory..."
@@ -653,6 +667,9 @@ sh.status()
 - Data directory: `/mnt/data/`
 - Logs: `/var/log/mongodb/`
 EOF
+
+
+
 
 ################################################################################
 # FINISH
