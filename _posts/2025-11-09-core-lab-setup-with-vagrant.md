@@ -3,10 +3,10 @@ title: Core Lab Setup with Vagrant
 date: 2025-11-09
 ---
 
-## Objective
+# Objective #
 Set up a local virtual environment using **HashiCorp Vagrant** to create test servers for your IT labs.
 
-## Steps
+# Steps #
 1. Install [Vagrant](https://developer.hashicorp.com/vagrant/downloads) and [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 2. Create a folder:
    ```bash
@@ -20,13 +20,13 @@ nano Vagrantfile
 Vagrant.configure("2") do |config|
   config.vm.box = "generic/oracle9"
   
-## Generate SSH key upfront (run once before vagrant up)
+# Generate SSH key upfront (run once before vagrant up) #
   ssh_pub_key = File.readlines("#{Dir.home}/.ssh/ol9_cluster.pub").first.strip rescue nil
   
-## 8 cluster nodes + 1 ansible controller = 9 total
+# 8 cluster nodes + 1 ansible controller = 9 total #
   NODE_COUNT = 8
   
-## Ansible controller node
+# Ansible controller node #
   config.vm.define "ol9-ansible" do |node|
     node.vm.hostname = "ol9-ansible"
     node.vm.network "private_network", ip: "192.168.121.100"
@@ -37,10 +37,10 @@ Vagrant.configure("2") do |config|
     end
     
     node.vm.provision "shell", inline: <<-SHELL
-# Install Ansible
+# Install Ansible #
       dnf install -y ansible-core vim
       
-# Copy SSH keys for vagrant user
+# Copy SSH keys for vagrant user #
       mkdir -p /home/vagrant/.ssh
       cp /media/lazio/vagrant-ol9-cluster /home/vagrant/.ssh/ol9_cluster
       cp /media/lazio/vagrant-ol9-cluster.pub /home/vagrant/.ssh/ol9_cluster.pub
