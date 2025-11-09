@@ -1,16 +1,17 @@
 #!/bin/bash
 ################################################################################
-# MongoDB Sharded Cluster - Complete Ansible Installer Builder
-# Run once on: 192.168.121.100 (ansible host)
-# Creates: /opt/mongodb-cluster/ with ALL ansible files
+# MongoDB Sharded Cluster - PROPER Ansible Galaxy Role Builder
+# Run on: 192.168.121.100 (ansible host)
+# Creates: /opt/mongodb-cluster/ with proper Galaxy role structure
 ################################################################################
 
 set -e
 
 INSTALL_DIR="/opt/mongodb-cluster"
+ROLE_NAME="mongodb_cluster"
 
 echo "================================================"
-echo "MongoDB Cluster - Ansible Installer Builder"
+echo "MongoDB Cluster - Ansible Galaxy Role Builder"
 echo "================================================"
 echo ""
 
@@ -25,17 +26,19 @@ if [ -d "$INSTALL_DIR" ]; then
     mv "$INSTALL_DIR" "$BACKUP"
 fi
 
-echo "[INFO] Creating: $INSTALL_DIR"
-mkdir -p $INSTALL_DIR/{playbooks,inventory,group_vars,templates}
+echo "[INFO] Creating Galaxy role structure in: $INSTALL_DIR"
+
+# Create proper Galaxy role structure
+mkdir -p $INSTALL_DIR/{roles/$ROLE_NAME/{tasks,vars,templates,defaults,handlers,meta},inventory}
 
 ################################################################################
 # ANSIBLE.CFG
 ################################################################################
-echo "[INFO] Creating ansible.cfg..."
 cat > $INSTALL_DIR/ansible.cfg <<'EOF'
 [defaults]
 inventory = inventory/hosts
 host_key_checking = False
+roles_path = roles
 interpreter_python = auto_silent
 
 [inventory]
@@ -45,7 +48,6 @@ EOF
 ################################################################################
 # INVENTORY
 ################################################################################
-echo "[INFO] Creating inventory..."
 cat > $INSTALL_DIR/inventory/hosts <<'EOF'
 [data_nodes]
 192.168.121.101
@@ -69,39 +71,398 @@ cat > $INSTALL_DIR/inventory/hosts <<'EOF'
 192.168.121.104
 192.168.121.105
 
+[mongodb_cluster:children]
+data_nodes
+config_servers
+arbiter
+mongos_routers
+
 [all:vars]
 ansible_user=vagrant
 ansible_become=yes
 ansible_become_method=sudo
-ansible_ssh_private_key_file=~/.ssh/id_ed25519
 EOF
 
 ################################################################################
-# GROUP VARIABLES
+# ROLE: DEFAULTS
 ################################################################################
-echo "[INFO] Creating group_vars..."
-cat > $INSTALL_DIR/group_vars/all.yml <<'EOF'
+cat > $INSTALL_DIR/roles/$ROLE_NAME/defaults/main.yml <<'EOF'
 ---
+# MongoDB version
 mongodb_version: "7.0"
+
+# Directories
 base_data_dir: "/mnt/data"
 log_dir: "/var/log/mongodb"
 config_dir: "/etc/mongodb-cls"
+
+# Replica Sets
 data_replset: "rs01"
 config_replset: "configReplSet"
+
+# Ports
 data_port: 27017
 config_port: 27019
 arbiter_port: 27014
 mongos_port: 27020
-config_servers: "configReplSet/192.168.121.106:27019,192.168.121.107:27019,192.168.121.108:27019"
+
+# Config servers
+config_servers_list:
+  - "192.168.121.106:27019"
+  - "192.168.121.107:27019"
+  - "192.168.121.108:27019"
+config_servers_str: "configReplSet/192.168.121.106:27019,192.168.121.107:27019,192.168.121.108:27019"
+
+# Data nodes
+data_nodes_list:
+  - "192.168.121.101:27017"
+  - "192.168.121.102:27017"
+  - "192.168.121.103:27017"
+  - "192.168.121.104:27017"
+  - "192.168.121.105:27017"
 EOF
 
 ################################################################################
-# TEMPLATES
+# ROLE: TASKS - MAIN
 ################################################################################
-echo "[INFO] Creating templates..."
+cat > $INSTALL_DIR/roles/$ROLE_NAME/tasks/main.yml <<'EOF'
+---
+- name: Include installation tasks
+  include_tasks: install.yml
+  when: inventory_hostname in groups['data_nodes'] or inventory_hostname in groups['config_servers']
 
-# Data node config
-cat > $INSTALL_DIR/templates/mongodb_cluster.conf.j2 <<'EOF'
+- name: Include data node tasks
+  include_tasks: data_node.yml
+  when: inventory_hostname in groups['data_nodes']
+
+- name: Include config server tasks
+  include_tasks: config_server.yml
+  when: inventory_hostname in groups['config_servers']
+
+- name: Include arbiter tasks
+  include_tasks: arbiter.yml
+  when: inventory_hostname in groups['arbiter']
+
+- name: Include mongos tasks
+  include_tasks: mongos.yml
+  when: inventory_hostname in groups['mongos_routers']
+EOF
+
+################################################################################
+# ROLE: TASKS - INSTALL
+################################################################################
+cat > $INSTALL_DIR/roles/$ROLE_NAME/tasks/install.yml <<'EOF'
+---
+- name: Add MongoDB repository
+  yum_repository:
+    name: mongodb-org-7.0
+    description: MongoDB Repository
+    baseurl: https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/7.0/x86_64/
+    gpgcheck: yes
+    enabled: yes
+    gpgkey: https://www.mongodb.org/static/pgp/server-7.0.asc
+
+- name: Install MongoDB packages
+  yum:
+    name:
+      - mongodb-org
+      - mongodb-org-server
+      - mongodb-org-mongos
+      - mongodb-org-tools
+      - mongodb-mongosh
+    state: present
+
+- name: Set SELinux to permissive
+  selinux:
+    state: permissive
+    policy: targeted
+  ignore_errors: yes
+
+- name: Open firewall ports
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop:
+    - "{{ data_port }}/tcp"
+    - "{{ config_port }}/tcp"
+    - "{{ arbiter_port }}/tcp"
+    - "{{ mongos_port }}/tcp"
+  when: ansible_facts.services['firewalld.service'] is defined
+  ignore_errors: yes
+EOF
+
+################################################################################
+# ROLE: TASKS - DATA NODE
+################################################################################
+cat > $INSTALL_DIR/roles/$ROLE_NAME/tasks/data_node.yml <<'EOF'
+---
+- name: Create data directory
+  file:
+    path: "{{ base_data_dir }}/mongodb"
+    state: directory
+    owner: mongod
+    group: mongod
+    mode: '0755'
+
+- name: Create log directory
+  file:
+    path: "{{ log_dir }}"
+    state: directory
+    owner: mongod
+    group: mongod
+    mode: '0755'
+
+- name: Create config directory
+  file:
+    path: "{{ config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy data node config
+  template:
+    src: mongodb_cluster.conf.j2
+    dest: "{{ config_dir }}/mongodb_cluster.conf"
+    owner: mongod
+    group: mongod
+    mode: '0644'
+  notify: restart mongodb-cluster
+
+- name: Create systemd service
+  template:
+    src: mongodb-cluster.service.j2
+    dest: /etc/systemd/system/mongodb-cluster.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart mongodb-cluster
+
+- name: Enable and start data node service
+  systemd:
+    name: mongodb-cluster
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for data node port
+  wait_for:
+    port: "{{ data_port }}"
+    delay: 5
+    timeout: 60
+EOF
+
+################################################################################
+# ROLE: TASKS - CONFIG SERVER
+################################################################################
+cat > $INSTALL_DIR/roles/$ROLE_NAME/tasks/config_server.yml <<'EOF'
+---
+- name: Create config data directory
+  file:
+    path: "{{ base_data_dir }}/mongodb-config"
+    state: directory
+    owner: mongod
+    group: mongod
+    mode: '0755'
+
+- name: Create log directory
+  file:
+    path: "{{ log_dir }}"
+    state: directory
+    owner: mongod
+    group: mongod
+    mode: '0755'
+
+- name: Create config directory
+  file:
+    path: "{{ config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy config server config
+  template:
+    src: mongodb_meta.conf.j2
+    dest: "{{ config_dir }}/mongodb_meta.conf"
+    owner: mongod
+    group: mongod
+    mode: '0644'
+  notify: restart mongodb-meta
+
+- name: Create systemd service
+  template:
+    src: mongodb-meta.service.j2
+    dest: /etc/systemd/system/mongodb-meta.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart mongodb-meta
+
+- name: Enable and start config server service
+  systemd:
+    name: mongodb-meta
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for config server port
+  wait_for:
+    port: "{{ config_port }}"
+    delay: 5
+    timeout: 60
+EOF
+
+################################################################################
+# ROLE: TASKS - ARBITER
+################################################################################
+cat > $INSTALL_DIR/roles/$ROLE_NAME/tasks/arbiter.yml <<'EOF'
+---
+- name: Create arbiter data directory
+  file:
+    path: "{{ base_data_dir }}/mongodb-arbiter"
+    state: directory
+    owner: mongod
+    group: mongod
+    mode: '0755'
+
+- name: Create log directory
+  file:
+    path: "{{ log_dir }}"
+    state: directory
+    owner: mongod
+    group: mongod
+    mode: '0755'
+
+- name: Create config directory
+  file:
+    path: "{{ config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy arbiter config
+  template:
+    src: mongodb_arbiter.conf.j2
+    dest: "{{ config_dir }}/mongodb_arbiter.conf"
+    owner: mongod
+    group: mongod
+    mode: '0644'
+  notify: restart mongodb-arbiter
+
+- name: Create systemd service
+  template:
+    src: mongodb-arbiter.service.j2
+    dest: /etc/systemd/system/mongodb-arbiter.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart mongodb-arbiter
+
+- name: Enable and start arbiter service
+  systemd:
+    name: mongodb-arbiter
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for arbiter port
+  wait_for:
+    port: "{{ arbiter_port }}"
+    delay: 5
+    timeout: 60
+EOF
+
+################################################################################
+# ROLE: TASKS - MONGOS
+################################################################################
+cat > $INSTALL_DIR/roles/$ROLE_NAME/tasks/mongos.yml <<'EOF'
+---
+- name: Create log directory
+  file:
+    path: "{{ log_dir }}"
+    state: directory
+    owner: mongod
+    group: mongod
+    mode: '0755'
+
+- name: Create config directory
+  file:
+    path: "{{ config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy mongos config
+  template:
+    src: mongos.conf.j2
+    dest: "{{ config_dir }}/mongos.conf"
+    owner: mongod
+    group: mongod
+    mode: '0644'
+  notify: restart mongos
+
+- name: Create systemd service
+  template:
+    src: mongos.service.j2
+    dest: /etc/systemd/system/mongos.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart mongos
+
+- name: Enable and start mongos service
+  systemd:
+    name: mongos
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for mongos port
+  wait_for:
+    port: "{{ mongos_port }}"
+    delay: 5
+    timeout: 60
+EOF
+
+################################################################################
+# ROLE: HANDLERS
+################################################################################
+cat > $INSTALL_DIR/roles/$ROLE_NAME/handlers/main.yml <<'EOF'
+---
+- name: restart mongodb-cluster
+  systemd:
+    name: mongodb-cluster
+    state: restarted
+    daemon_reload: yes
+
+- name: restart mongodb-meta
+  systemd:
+    name: mongodb-meta
+    state: restarted
+    daemon_reload: yes
+
+- name: restart mongodb-arbiter
+  systemd:
+    name: mongodb-arbiter
+    state: restarted
+    daemon_reload: yes
+
+- name: restart mongos
+  systemd:
+    name: mongos
+    state: restarted
+    daemon_reload: yes
+EOF
+
+################################################################################
+# ROLE: TEMPLATES
+################################################################################
+cat > $INSTALL_DIR/roles/$ROLE_NAME/templates/mongodb_cluster.conf.j2 <<'EOF'
 storage:
   dbPath: {{ base_data_dir }}/mongodb
   journal:
@@ -109,389 +470,202 @@ storage:
   wiredTiger:
     engineConfig:
       cacheSizeGB: 2
+
 systemLog:
   destination: file
   path: {{ log_dir }}/mongodb_cluster.log
   logAppend: true
+
 net:
   port: {{ data_port }}
   bindIp: 0.0.0.0
+
 processManagement:
   fork: true
   pidFilePath: /var/run/mongodb/mongodb_cluster.pid
+
 replication:
   replSetName: {{ data_replset }}
+
 sharding:
   clusterRole: shardsvr
 EOF
 
-# Config server config
-cat > $INSTALL_DIR/templates/mongodb_meta.conf.j2 <<'EOF'
+cat > $INSTALL_DIR/roles/$ROLE_NAME/templates/mongodb_meta.conf.j2 <<'EOF'
 storage:
   dbPath: {{ base_data_dir }}/mongodb-config
   journal:
     enabled: true
+
 systemLog:
   destination: file
   path: {{ log_dir }}/mongodb_meta.log
   logAppend: true
+
 net:
   port: {{ config_port }}
   bindIp: 0.0.0.0
+
 processManagement:
   fork: true
   pidFilePath: /var/run/mongodb/mongodb_meta.pid
+
 replication:
   replSetName: {{ config_replset }}
+
 sharding:
   clusterRole: configsvr
 EOF
 
-# Arbiter config
-cat > $INSTALL_DIR/templates/mongodb_arbiter.conf.j2 <<'EOF'
+cat > $INSTALL_DIR/roles/$ROLE_NAME/templates/mongodb_arbiter.conf.j2 <<'EOF'
 storage:
   dbPath: {{ base_data_dir }}/mongodb-arbiter
   journal:
     enabled: true
+
 systemLog:
   destination: file
   path: {{ log_dir }}/mongodb_arbiter.log
   logAppend: true
+
 net:
   port: {{ arbiter_port }}
   bindIp: 0.0.0.0
+
 processManagement:
   fork: true
   pidFilePath: /var/run/mongodb/mongodb_arbiter.pid
+
 replication:
   replSetName: {{ data_replset }}
 EOF
 
-# Mongos config
-cat > $INSTALL_DIR/templates/mongos.conf.j2 <<'EOF'
+cat > $INSTALL_DIR/roles/$ROLE_NAME/templates/mongos.conf.j2 <<'EOF'
 systemLog:
   destination: file
   path: {{ log_dir }}/mongos.log
   logAppend: true
+
 net:
   port: {{ mongos_port }}
   bindIp: 0.0.0.0
+
 processManagement:
   fork: true
   pidFilePath: /var/run/mongodb/mongos.pid
+
 sharding:
-  configDB: {{ config_servers }}
+  configDB: {{ config_servers_str }}
+EOF
+
+cat > $INSTALL_DIR/roles/$ROLE_NAME/templates/mongodb-cluster.service.j2 <<'EOF'
+[Unit]
+Description=MongoDB Data Node
+After=network.target
+
+[Service]
+Type=forking
+User=mongod
+Group=mongod
+ExecStart=/usr/bin/mongod --config {{ config_dir }}/mongodb_cluster.conf
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat > $INSTALL_DIR/roles/$ROLE_NAME/templates/mongodb-meta.service.j2 <<'EOF'
+[Unit]
+Description=MongoDB Config Server
+After=network.target
+
+[Service]
+Type=forking
+User=mongod
+Group=mongod
+ExecStart=/usr/bin/mongod --config {{ config_dir }}/mongodb_meta.conf
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat > $INSTALL_DIR/roles/$ROLE_NAME/templates/mongodb-arbiter.service.j2 <<'EOF'
+[Unit]
+Description=MongoDB Arbiter
+After=network.target
+
+[Service]
+Type=forking
+User=mongod
+Group=mongod
+ExecStart=/usr/bin/mongod --config {{ config_dir }}/mongodb_arbiter.conf
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat > $INSTALL_DIR/roles/$ROLE_NAME/templates/mongos.service.j2 <<'EOF'
+[Unit]
+Description=Mongos Router
+After=network.target
+
+[Service]
+Type=forking
+User=mongod
+Group=mongod
+ExecStart=/usr/bin/mongos --config {{ config_dir }}/mongos.conf
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
 EOF
 
 ################################################################################
-# PLAYBOOK 01 - INSTALL MONGODB
+# ROLE: META
 ################################################################################
-echo "[INFO] Creating playbook 01-install-mongodb.yml..."
-cat > $INSTALL_DIR/playbooks/01-install-mongodb.yml <<'EOF'
+cat > $INSTALL_DIR/roles/$ROLE_NAME/meta/main.yml <<'EOF'
 ---
-- name: Install MongoDB on all nodes
-  hosts: data_nodes,config_servers
-  become: yes
-  tasks:
+galaxy_info:
+  author: Lazio
+  description: MongoDB Sharded Cluster Installation
+  company: Omega IT Group Ltd
+  license: MIT
+  min_ansible_version: 2.9
+  
+  platforms:
+    - name: EL
+      versions:
+        - 8
+        - 9
 
-    - name: Add MongoDB repository
-      yum_repository:
-        name: mongodb-org-7.0
-        description: MongoDB Repository
-        baseurl: https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/7.0/x86_64/
-        gpgcheck: yes
-        enabled: yes
-        gpgkey: https://www.mongodb.org/static/pgp/server-7.0.asc
-
-    - name: Install MongoDB packages
-      yum:
-        name:
-          - mongodb-org
-          - mongodb-org-server
-          - mongodb-org-mongos
-          - mongodb-org-tools
-          - mongodb-mongosh
-        state: present
-
-    - name: Set SELinux to permissive
-      selinux:
-        state: permissive
-        policy: targeted
-      ignore_errors: yes
-
-    - name: Open firewall ports
-      firewalld:
-        port: "{{ item }}"
-        permanent: yes
-        state: enabled
-        immediate: yes
-      loop:
-        - "{{ data_port }}/tcp"
-        - "{{ config_port }}/tcp"
-        - "{{ arbiter_port }}/tcp"
-        - "{{ mongos_port }}/tcp"
-      when: ansible_facts.services['firewalld.service'] is defined
-      ignore_errors: yes
+dependencies: []
 EOF
 
 ################################################################################
-# PLAYBOOK 02 - CREATE DIRECTORIES
+# MAIN PLAYBOOK
 ################################################################################
-echo "[INFO] Creating playbook 02-create-directories.yml..."
-cat > $INSTALL_DIR/playbooks/02-create-directories.yml <<'EOF'
+cat > $INSTALL_DIR/site.yml <<'EOF'
 ---
-- name: Create directories on data nodes
-  hosts: data_nodes
+- name: Deploy MongoDB Sharded Cluster
+  hosts: mongodb_cluster
   become: yes
-  tasks:
-    - name: Create directories
-      file:
-        path: "{{ item }}"
-        state: directory
-        owner: mongod
-        group: mongod
-        mode: '0755'
-      loop:
-        - "{{ base_data_dir }}/mongodb"
-        - "{{ log_dir }}"
-        - "{{ config_dir }}"
-
-- name: Create directories on config servers
-  hosts: config_servers
-  become: yes
-  tasks:
-    - name: Create directories
-      file:
-        path: "{{ item }}"
-        state: directory
-        owner: mongod
-        group: mongod
-        mode: '0755'
-      loop:
-        - "{{ base_data_dir }}/mongodb-config"
-        - "{{ log_dir }}"
-        - "{{ config_dir }}"
-
-- name: Create directories on arbiter
-  hosts: arbiter
-  become: yes
-  tasks:
-    - name: Create directories
-      file:
-        path: "{{ item }}"
-        state: directory
-        owner: mongod
-        group: mongod
-        mode: '0755'
-      loop:
-        - "{{ base_data_dir }}/mongodb-arbiter"
-        - "{{ log_dir }}"
-        - "{{ config_dir }}"
+  roles:
+    - mongodb_cluster
 EOF
 
 ################################################################################
-# PLAYBOOK 03 - CONFIGURE DATA NODES
+# INITIALIZATION PLAYBOOK
 ################################################################################
-echo "[INFO] Creating playbook 03-configure-data-nodes.yml..."
-cat > $INSTALL_DIR/playbooks/03-configure-data-nodes.yml <<'EOF'
----
-- name: Configure data nodes
-  hosts: data_nodes
-  become: yes
-  tasks:
-
-    - name: Deploy data node config
-      template:
-        src: ../templates/mongodb_cluster.conf.j2
-        dest: "{{ config_dir }}/mongodb_cluster.conf"
-        owner: mongod
-        group: mongod
-        mode: '0644'
-
-    - name: Create systemd service
-      copy:
-        dest: /etc/systemd/system/mongodb-cluster.service
-        content: |
-          [Unit]
-          Description=MongoDB Data Node
-          After=network.target
-          [Service]
-          Type=forking
-          User=mongod
-          Group=mongod
-          ExecStart=/usr/bin/mongod --config {{ config_dir }}/mongodb_cluster.conf
-          Restart=on-failure
-          [Install]
-          WantedBy=multi-user.target
-
-    - name: Start data node
-      systemd:
-        name: mongodb-cluster
-        state: started
-        enabled: yes
-        daemon_reload: yes
-
-    - name: Wait for port
-      wait_for:
-        port: "{{ data_port }}"
-        delay: 5
-EOF
-
-################################################################################
-# PLAYBOOK 04 - CONFIGURE CONFIG SERVERS
-################################################################################
-echo "[INFO] Creating playbook 04-configure-config-servers.yml..."
-cat > $INSTALL_DIR/playbooks/04-configure-config-servers.yml <<'EOF'
----
-- name: Configure config servers
-  hosts: config_servers
-  become: yes
-  tasks:
-
-    - name: Deploy config server config
-      template:
-        src: ../templates/mongodb_meta.conf.j2
-        dest: "{{ config_dir }}/mongodb_meta.conf"
-        owner: mongod
-        group: mongod
-        mode: '0644'
-
-    - name: Create systemd service
-      copy:
-        dest: /etc/systemd/system/mongodb-meta.service
-        content: |
-          [Unit]
-          Description=MongoDB Config Server
-          After=network.target
-          [Service]
-          Type=forking
-          User=mongod
-          Group=mongod
-          ExecStart=/usr/bin/mongod --config {{ config_dir }}/mongodb_meta.conf
-          Restart=on-failure
-          [Install]
-          WantedBy=multi-user.target
-
-    - name: Start config server
-      systemd:
-        name: mongodb-meta
-        state: started
-        enabled: yes
-        daemon_reload: yes
-
-    - name: Wait for port
-      wait_for:
-        port: "{{ config_port }}"
-        delay: 5
-EOF
-
-################################################################################
-# PLAYBOOK 05 - CONFIGURE ARBITER
-################################################################################
-echo "[INFO] Creating playbook 05-configure-arbiter.yml..."
-cat > $INSTALL_DIR/playbooks/05-configure-arbiter.yml <<'EOF'
----
-- name: Configure arbiter
-  hosts: arbiter
-  become: yes
-  tasks:
-
-    - name: Deploy arbiter config
-      template:
-        src: ../templates/mongodb_arbiter.conf.j2
-        dest: "{{ config_dir }}/mongodb_arbiter.conf"
-        owner: mongod
-        group: mongod
-        mode: '0644'
-
-    - name: Create systemd service
-      copy:
-        dest: /etc/systemd/system/mongodb-arbiter.service
-        content: |
-          [Unit]
-          Description=MongoDB Arbiter
-          After=network.target
-          [Service]
-          Type=forking
-          User=mongod
-          Group=mongod
-          ExecStart=/usr/bin/mongod --config {{ config_dir }}/mongodb_arbiter.conf
-          Restart=on-failure
-          [Install]
-          WantedBy=multi-user.target
-
-    - name: Start arbiter
-      systemd:
-        name: mongodb-arbiter
-        state: started
-        enabled: yes
-        daemon_reload: yes
-
-    - name: Wait for port
-      wait_for:
-        port: "{{ arbiter_port }}"
-        delay: 5
-EOF
-
-################################################################################
-# PLAYBOOK 06 - CONFIGURE MONGOS
-################################################################################
-echo "[INFO] Creating playbook 06-configure-mongos.yml..."
-cat > $INSTALL_DIR/playbooks/06-configure-mongos.yml <<'EOF'
----
-- name: Configure mongos routers
-  hosts: mongos_routers
-  become: yes
-  tasks:
-
-    - name: Deploy mongos config
-      template:
-        src: ../templates/mongos.conf.j2
-        dest: "{{ config_dir }}/mongos.conf"
-        owner: mongod
-        group: mongod
-        mode: '0644'
-
-    - name: Create systemd service
-      copy:
-        dest: /etc/systemd/system/mongos.service
-        content: |
-          [Unit]
-          Description=Mongos Router
-          After=network.target
-          [Service]
-          Type=forking
-          User=mongod
-          Group=mongod
-          ExecStart=/usr/bin/mongos --config {{ config_dir }}/mongos.conf
-          Restart=on-failure
-          [Install]
-          WantedBy=multi-user.target
-
-    - name: Start mongos
-      systemd:
-        name: mongos
-        state: started
-        enabled: yes
-        daemon_reload: yes
-
-    - name: Wait for port
-      wait_for:
-        port: "{{ mongos_port }}"
-        delay: 5
-EOF
-
-################################################################################
-# PLAYBOOK 07 - INIT CONFIG REPLICA SET
-################################################################################
-echo "[INFO] Creating playbook 07-init-config-replset.yml..."
-cat > $INSTALL_DIR/playbooks/07-init-config-replset.yml <<'EOF'
+cat > $INSTALL_DIR/init_cluster.yml <<'EOF'
 ---
 - name: Initialize config server replica set
   hosts: 192.168.121.106
   become: yes
+  vars_files:
+    - roles/mongodb_cluster/defaults/main.yml
   tasks:
-
     - name: Initialize config replica set
       shell: |
         mongosh --port {{ config_port }} --quiet --eval '
@@ -505,28 +679,22 @@ cat > $INSTALL_DIR/playbooks/07-init-config-replset.yml <<'EOF'
           ]
         })
         '
-      register: rs_init
+      register: config_rs_init
       
     - name: Show result
       debug:
-        var: rs_init.stdout
+        var: config_rs_init.stdout
 
     - name: Wait for replica set
       pause:
         seconds: 30
-EOF
 
-################################################################################
-# PLAYBOOK 08 - INIT DATA REPLICA SET
-################################################################################
-echo "[INFO] Creating playbook 08-init-data-replset.yml..."
-cat > $INSTALL_DIR/playbooks/08-init-data-replset.yml <<'EOF'
----
 - name: Initialize data replica set
   hosts: 192.168.121.101
   become: yes
+  vars_files:
+    - roles/mongodb_cluster/defaults/main.yml
   tasks:
-
     - name: Initialize data replica set
       shell: |
         mongosh --port {{ data_port }} --quiet --eval '
@@ -542,147 +710,121 @@ cat > $INSTALL_DIR/playbooks/08-init-data-replset.yml <<'EOF'
           ]
         })
         '
-      register: rs_init
+      register: data_rs_init
       
     - name: Show result
       debug:
-        var: rs_init.stdout
+        var: data_rs_init.stdout
 
     - name: Wait for replica set
       pause:
         seconds: 30
-EOF
 
-################################################################################
-# PLAYBOOK 09 - ADD SHARD
-################################################################################
-echo "[INFO] Creating playbook 09-add-shard.yml..."
-cat > $INSTALL_DIR/playbooks/09-add-shard.yml <<'EOF'
----
-- name: Add shard to cluster
-  hosts: 192.168.121.101
-  become: yes
-  tasks:
-
-    - name: Add shard
+    - name: Add shard to cluster
       shell: |
         mongosh --port {{ mongos_port }} --quiet --eval '
         sh.addShard("{{ data_replset }}/192.168.121.101:{{ data_port }},192.168.121.102:{{ data_port }},192.168.121.103:{{ data_port }},192.168.121.104:{{ data_port }},192.168.121.105:{{ data_port }}")
         '
       register: shard_add
       
-    - name: Show result
+    - name: Show shard add result
       debug:
         var: shard_add.stdout
 
-    - name: Check shard status
+    - name: Check cluster status
       shell: |
         mongosh --port {{ mongos_port }} --quiet --eval 'sh.status()'
-      register: shard_status
+      register: cluster_status
       
-    - name: Show shard status
+    - name: Show cluster status
       debug:
-        var: shard_status.stdout
+        var: cluster_status.stdout
 EOF
 
 ################################################################################
 # README
 ################################################################################
-echo "[INFO] Creating README..."
 cat > $INSTALL_DIR/README.md <<'EOF'
-# MongoDB Sharded Cluster - Ansible Installer
+# MongoDB Sharded Cluster - Ansible Galaxy Role
 
-## Cluster Topology
-
-**Data Nodes (5):** 192.168.121.101-105 (port 27017) - Replica Set: rs01
-**Config Servers (3):** 192.168.121.106-108 (port 27019) - Replica Set: configReplSet
-**Arbiter (1):** 192.168.121.108 (port 27014) - Part of rs01
-**Mongos Routers (5):** 192.168.121.101-105 (port 27020)
-
-## Installation Order
-
-```bash
-cd /opt/mongodb-cluster
-
-# 1. Install MongoDB on all nodes
-ansible-playbook -i inventory/hosts playbooks/01-install-mongodb.yml
-
-# 2. Create directories on all nodes
-ansible-playbook -i inventory/hosts playbooks/02-create-directories.yml
-
-# 3. Configure data nodes (5 servers)
-ansible-playbook -i inventory/hosts playbooks/03-configure-data-nodes.yml
-
-# 4. Configure config servers (3 servers)
-ansible-playbook -i inventory/hosts playbooks/04-configure-config-servers.yml
-
-# 5. Configure arbiter (1 server)
-ansible-playbook -i inventory/hosts playbooks/05-configure-arbiter.yml
-
-# 6. Configure mongos routers (5 servers)
-ansible-playbook -i inventory/hosts playbooks/06-configure-mongos.yml
-
-# 7. Initialize config server replica set
-ansible-playbook -i inventory/hosts playbooks/07-init-config-replset.yml
-
-# 8. Initialize data replica set
-ansible-playbook -i inventory/hosts playbooks/08-init-data-replset.yml
-
-# 9. Add shard to cluster
-ansible-playbook -i inventory/hosts playbooks/09-add-shard.yml
-```
-
-## Verify Cluster
-
-Connect to any mongos:
-```bash
-mongosh --host 192.168.121.101 --port 27020
-```
-
-Check status:
-```javascript
-sh.status()
-```
-
-## Files Structure
+## Proper Galaxy Role Structure
 
 ```
 /opt/mongodb-cluster/
-├── inventory/hosts           # All 8 nodes
-├── group_vars/all.yml        # Variables
-├── templates/                # Config templates
-│   ├── mongodb_cluster.conf.j2
-│   ├── mongodb_meta.conf.j2
-│   ├── mongodb_arbiter.conf.j2
-│   └── mongos.conf.j2
-└── playbooks/                # 9 playbooks (numbered)
+├── ansible.cfg
+├── inventory/hosts
+├── site.yml                  # Main playbook
+├── init_cluster.yml          # Initialization playbook
+└── roles/
+    └── mongodb_cluster/
+        ├── defaults/         # Default variables
+        ├── tasks/            # Task files
+        ├── templates/        # Jinja2 templates
+        ├── handlers/         # Service handlers
+        └── meta/             # Role metadata
 ```
 
-## Config Locations on Nodes
+## Installation Steps
 
-- Data nodes: `/etc/mongodb-cls/mongodb_cluster.conf`
-- Config servers: `/etc/mongodb-cls/mongodb_meta.conf`
-- Arbiter: `/etc/mongodb-cls/mongodb_arbiter.conf`
-- Mongos: `/etc/mongodb-cls/mongos.conf`
-- Data directory: `/mnt/data/`
-- Logs: `/var/log/mongodb/`
+### 1. Deploy MongoDB components
+```bash
+cd /opt/mongodb-cluster
+ansible-playbook site.yml
+```
+
+This single playbook:
+- Installs MongoDB on all nodes
+- Creates all directories
+- Deploys configurations
+- Starts all services
+
+### 2. Initialize cluster
+```bash
+ansible-playbook init_cluster.yml
+```
+
+This initializes:
+- Config server replica set
+- Data node replica set with arbiter
+- Adds shard to cluster
+
+### 3. Verify
+```bash
+mongosh --host 192.168.121.101 --port 27020
+sh.status()
+```
+
+## Cluster Topology
+
+- **Data Nodes (5):** 192.168.121.101-105 (port 27017) - rs01
+- **Config Servers (3):** 192.168.121.106-108 (port 27019) - configReplSet
+- **Arbiter (1):** 192.168.121.108 (port 27014)
+- **Mongos (5):** 192.168.121.101-105 (port 27020)
+
+## Variables
+
+All variables in `roles/mongodb_cluster/defaults/main.yml`
+
+## Services
+
+- mongodb-cluster (data nodes)
+- mongodb-meta (config servers)
+- mongodb-arbiter
+- mongos
 EOF
 
-
-
-
-################################################################################
-# FINISH
-################################################################################
 echo ""
 echo "================================================"
 echo "COMPLETE!"
 echo "================================================"
 echo ""
-echo "Created in: $INSTALL_DIR"
+echo "Created proper Ansible Galaxy role in: $INSTALL_DIR"
 echo ""
 echo "Structure:"
-ls -lh $INSTALL_DIR/
+tree -L 3 $INSTALL_DIR 2>/dev/null || find $INSTALL_DIR -type d | head -20
 echo ""
-echo "Next: cd $INSTALL_DIR && cat README.md"
+echo "Next steps:"
+echo "  cd $INSTALL_DIR"
+echo "  ansible-playbook site.yml         # Deploy everything"
+echo "  ansible-playbook init_cluster.yml # Initialize cluster"
 echo ""
