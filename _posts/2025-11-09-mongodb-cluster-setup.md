@@ -17,17 +17,12 @@ This creates `/opt/mongodb-cluster/` with:
 
 ### Step 2: Run the playbooks in order
 ```bash
-cd /opt/mongodb-cluster
 
-ansible-playbook -i inventory/hosts playbooks/01-install-mongodb.yml
-ansible-playbook -i inventory/hosts playbooks/02-create-directories.yml
-ansible-playbook -i inventory/hosts playbooks/03-configure-data-nodes.yml
-ansible-playbook -i inventory/hosts playbooks/04-configure-config-servers.yml
-ansible-playbook -i inventory/hosts playbooks/05-configure-arbiter.yml
-ansible-playbook -i inventory/hosts playbooks/06-configure-mongos.yml
-ansible-playbook -i inventory/hosts playbooks/07-init-config-replset.yml
-ansible-playbook -i inventory/hosts playbooks/08-init-data-replset.yml
-ansible-playbook -i inventory/hosts playbooks/09-add-shard.yml
+cd /opt/mongodb-cluster
+ansible-playbook prep_systems.yml # Install NTP, disables SELinux
+ansible-playbook site.yml         # Installs, configures, starts everything
+ansible-playbook init_cluster.yml # Initializes replica sets + shard
+
 ```
 
 ### Step 3: Test
