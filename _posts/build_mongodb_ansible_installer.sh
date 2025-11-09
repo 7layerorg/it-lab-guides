@@ -465,8 +465,6 @@ EOF
 cat > $INSTALL_DIR/roles/$ROLE_NAME/templates/mongodb_cluster.conf.j2 <<'EOF'
 storage:
   dbPath: {{ base_data_dir }}/mongodb
-  journal:
-    enabled: true
   wiredTiger:
     engineConfig:
       cacheSizeGB: 2
@@ -494,8 +492,6 @@ EOF
 cat > $INSTALL_DIR/roles/$ROLE_NAME/templates/mongodb_meta.conf.j2 <<'EOF'
 storage:
   dbPath: {{ base_data_dir }}/mongodb-config
-  journal:
-    enabled: true
 
 systemLog:
   destination: file
@@ -520,8 +516,6 @@ EOF
 cat > $INSTALL_DIR/roles/$ROLE_NAME/templates/mongodb_arbiter.conf.j2 <<'EOF'
 storage:
   dbPath: {{ base_data_dir }}/mongodb-arbiter
-  journal:
-    enabled: true
 
 systemLog:
   destination: file
