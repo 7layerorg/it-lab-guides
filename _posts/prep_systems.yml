@@ -1,0 +1,58 @@
+---
+- name: Prepare systems for MongoDB cluster
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Disable SELinux permanently
+      lineinfile:
+        path: /etc/selinux/config
+        regexp: '^SELINUX='
+        line: 'SELINUX=disabled'
+      register: selinux_config
+
+    - name: Disable SELinux immediately
+      command: setenforce 0
+      ignore_errors: yes
+
+    - name: Stop and disable firewalld
+      systemd:
+        name: firewalld
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+
+    - name: Install chrony for NTP
+      yum:
+        name: chrony
+        state: present
+
+    - name: Ensure chronyd is started and enabled
+      systemd:
+        name: chronyd
+        state: started
+        enabled: yes
+
+    - name: Force time sync
+      command: chronyc makestep
+      ignore_errors: yes
+
+    - name: Check time sync status
+      command: chronyc tracking
+      register: chrony_status
+      changed_when: false
+
+    - name: Display time sync status
+      debug:
+        var: chrony_status.stdout_lines
+
+    - name: Reboot if SELinux was changed
+      reboot:
+        reboot_timeout: 300
+      when: selinux_config.changed
+
+    - name: Wait for systems to come back
+      wait_for_connection:
+        delay: 10
+        timeout: 300
+      when: selinux_config.changed
