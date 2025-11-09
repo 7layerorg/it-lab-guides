@@ -56,7 +56,10 @@ cat > $INSTALL_DIR/inventory/hosts <<'EOF'
 192.168.121.105
 
 [all:vars]
-ansible_user=root
+ansible_user=vagrant
+ansible_become=yes
+ansible_become_method=sudo
+ansible_ssh_private_key_file=~/.ssh/id_ed25519
 EOF
 
 ################################################################################
