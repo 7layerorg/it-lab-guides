@@ -3,9 +3,11 @@ title: Core Lab Setup with Vagrant
 date: 2025-11-09
 ---
 
+```bash
 # Objective #
 Set up a local virtual environment using **HashiCorp Vagrant** to create test servers for your IT labs.
 
+```bash
 # Steps #
 1. Install [Vagrant](https://developer.hashicorp.com/vagrant/downloads) and [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 2. Create a folder:
@@ -13,13 +15,14 @@ Set up a local virtual environment using **HashiCorp Vagrant** to create test se
    mkdir ~/it-lab && cd ~/it-lab
 3. Create the Vagrant file:
 
+```bash
 nano Vagrantfile
 
 ######
-
+```bash
 Vagrant.configure("2") do |config|
   config.vm.box = "generic/oracle9"
-  
+```bash  
 # Generate SSH key upfront (run once before vagrant up) #
   ssh_pub_key = File.readlines("#{Dir.home}/.ssh/ol9_cluster.pub").first.strip rescue nil
   
