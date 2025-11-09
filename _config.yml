@@ -1,0 +1,8 @@
+title: IT Lab Guides
+description: Hands-on infrastructure labs and deployment guides for modern IT stacks.
+theme: jekyll-theme-cayman
+author: Lazio
+show_downloads: false
+github:
+  is_project_page: true
+  repository_url: https://github.com/7layerorg/it-lab-guides
