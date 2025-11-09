@@ -3,10 +3,10 @@ title: Core Lab Setup with Vagrant
 date: 2025-11-09
 ---
 
-### Objective
+# Objective
 Set up a local virtual environment using **HashiCorp Vagrant** to create test servers for your IT labs.
 
-### Steps
+# Steps
 1. Install [Vagrant](https://developer.hashicorp.com/vagrant/downloads) and [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 2. Create a folder:
    ```bash
