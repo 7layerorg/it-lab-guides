@@ -20,13 +20,13 @@ nano Vagrantfile
 Vagrant.configure("2") do |config|
   config.vm.box = "generic/oracle9"
   
-  # Generate SSH key upfront (run once before vagrant up)
+# Generate SSH key upfront (run once before vagrant up)
   ssh_pub_key = File.readlines("#{Dir.home}/.ssh/ol9_cluster.pub").first.strip rescue nil
   
-  # 8 cluster nodes + 1 ansible controller = 9 total
+# 8 cluster nodes + 1 ansible controller = 9 total
   NODE_COUNT = 8
   
-  # Ansible controller node
+# Ansible controller node
   config.vm.define "ol9-ansible" do |node|
     node.vm.hostname = "ol9-ansible"
     node.vm.network "private_network", ip: "192.168.121.100"
@@ -37,10 +37,10 @@ Vagrant.configure("2") do |config|
     end
     
     node.vm.provision "shell", inline: <<-SHELL
-      # Install Ansible
+# Install Ansible
       dnf install -y ansible-core vim
       
-      # Copy SSH keys for vagrant user
+# Copy SSH keys for vagrant user
       mkdir -p /home/vagrant/.ssh
       cp /media/lazio/vagrant-ol9-cluster /home/vagrant/.ssh/ol9_cluster
       cp /media/lazio/vagrant-ol9-cluster.pub /home/vagrant/.ssh/ol9_cluster.pub
@@ -48,12 +48,12 @@ Vagrant.configure("2") do |config|
       chmod 644 /home/vagrant/.ssh/ol9_cluster.pub
       chown -R vagrant:vagrant /home/vagrant/.ssh
 
-      # Add all nodes to /etc/hosts
+# Add all nodes to /etc/hosts
       for j in {1..8}; do
         echo "192.168.121.$((100+j)) ol9-node$j" >> /etc/hosts
       done
       
-      # Create Ansible inventory
+# Create Ansible inventory
       cat > /home/vagrant/inventory << 'EOF'
 [cluster]
 ol9-node1 ansible_host=192.168.121.101
@@ -74,7 +74,7 @@ EOF
     SHELL
   end
   
-  # 8 cluster nodes
+# 8 cluster nodes
   (1..NODE_COUNT).each do |i|
     config.vm.define "ol9-node#{i}" do |node|
       node.vm.hostname = "ol9-node#{i}"
@@ -86,13 +86,13 @@ EOF
       end
       
       node.vm.provision "shell", inline: <<-SHELL
-        # Add ansible controller and all nodes to /etc/hosts
+# Add ansible controller and all nodes to /etc/hosts
         echo "192.168.121.100 ol9-ansible" >> /etc/hosts
         for j in {1..8}; do
           echo "192.168.121.$((100+j)) ol9-node$j" >> /etc/hosts
         done
         
-        # Add SSH public key for passwordless access
+# Add SSH public key for passwordless access
         if [ -n "#{ssh_pub_key}" ]; then
           mkdir -p /home/vagrant/.ssh
           echo "#{ssh_pub_key}" >> /home/vagrant/.ssh/authorized_keys
