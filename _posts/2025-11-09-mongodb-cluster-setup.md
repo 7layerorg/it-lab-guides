@@ -51,7 +51,7 @@ Done.
 - Initializes replica sets
 - Adds shard to cluster
 
-
+```bash
 And here comes the fun part:
 
 #########################
