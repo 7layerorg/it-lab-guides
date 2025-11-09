@@ -22,6 +22,13 @@
         enabled: no
       ignore_errors: yes
 
+    - name: Stop and disable mongod
+      systemd:
+        name: mongod
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+
     - name: Install chrony for NTP
       yum:
         name: chrony
@@ -41,6 +48,17 @@
       command: chronyc tracking
       register: chrony_status
       changed_when: false
+
+    - name: Create dir for mongodb in var
+      command: mkdir -p /var/run/mongodb
+#      register: chrony_status
+#      changed_when: false
+
+    - name: Chown dir for mongodb in var
+      command: chown mongod:mongod /var/run/mongodb
+
+    - name: Stop mongodb-cluster
+      command: systemctl stop mongodb-cluster
 
     - name: Display time sync status
       debug:
