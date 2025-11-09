@@ -1,5 +1,7 @@
 # MongoDB Cluster Ansible Installer - Quick Start
 
+```bash
+
 ## On Ansible Host (192.168.121.100)
 
 ### Step 1: Run the builder (creates everything)
