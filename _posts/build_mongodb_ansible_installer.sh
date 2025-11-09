@@ -194,8 +194,9 @@ cat > $INSTALL_DIR/playbooks/01-install-mongodb.yml <<'EOF'
         name:
           - mongodb-org
           - mongodb-org-server
-          - mongodb-org-shell
+          - mongodb-org-mongos
           - mongodb-org-tools
+          - mongodb-mongosh
         state: present
 
     - name: Set SELinux to permissive
