@@ -1,61 +1,26 @@
----
-# Initialize Data Replica Set and Add Shard
-
-- name: Check if data replica set is already initialized
-  shell: |
-    mongosh --port {{ data_port }} --quiet --eval 'rs.status()'
-  register: data_rs_status
-  failed_when: data_rs_status.rc != 0 and "isMaster" not in data_rs_status.stdout
-  changed_when: false
-
-- name: Initialize data replica set
+- name: Initialize data replica set (run on primary node)
   shell: |
     mongosh --port {{ data_port }} --quiet --eval '
-    rs.initiate({
-      _id: "{{ data_replset }}",
-      members: [
-        { _id: 0, host: "192.168.121.101:{{ data_port }}" },
-        { _id: 1, host: "192.168.121.102:{{ data_port }}" },
-        { _id: 2, host: "192.168.121.103:{{ data_port }}" },
-        { _id: 3, host: "192.168.121.104:{{ data_port }}" },
-        { _id: 4, host: "192.168.121.105:{{ data_port }}" },
-        { _id: 5, host: "192.168.121.108:{{ arbiter_port }}", arbiterOnly: true }
-      ]
-    })
+    try {
+      rs.initiate({
+        _id: "{{ data_replset }}",
+        members: [
+          { _id: 0, host: "192.168.121.101:{{ data_port }}" },
+          { _id: 1, host: "192.168.121.102:{{ data_port }}" },
+          { _id: 2, host: "192.168.121.103:{{ data_port }}" },
+          { _id: 3, host: "192.168.121.104:{{ data_port }}" },
+          { _id: 4, host: "192.168.121.105:{{ data_port }}" },
+          { _id: 5, host: "192.168.121.108:{{ arbiter_port }}", arbiterOnly: true }
+        ]
+      })
+    } catch (e) {
+      print("Replica set may already be initialized: " + e)
+    }
+    rs.status()
     '
   register: data_rs_init
-  when: data_rs_status.rc != 0 and "isMaster" not in data_rs_status.stdout
+  ignore_errors: yes
 
-- name: Show data replica set initialization result
-  debug:
-    var: data_rs_init.stdout
-  when: data_rs_status.rc != 0 and "isMaster" not in data_rs_status.stdout
-
-- name: Wait for data replica set to stabilize
+- name: Pause for replica set stabilization
   pause:
-    seconds: 50
-  when: data_rs_status.rc != 0 and "isMaster" not in data_rs_status.stdout
-
-- name: Add shard to cluster
-  shell: |
-    mongosh --port {{ mongos_port }} --quiet --eval '
-    sh.addShard("{{ data_replset }}/192.168.121.101:{{ data_port }},192.168.121.102:{{ data_port }},192.168.121.103:{{ data_port }},192.168.121.104:{{ data_port }},192.168.121.105:{{ data_port }}")
-    '
-  register: shard_add
-  when: data_rs_status.rc != 0 and "isMaster" not in data_rs_status.stdout
-
-- name: Show shard add result
-  debug:
-    var: shard_add.stdout
-  when: data_rs_status.rc != 0 and "isMaster" not in data_rs_status.stdout
-
-- name: Check cluster status
-  shell: |
-    mongosh --port {{ mongos_port }} --quiet --eval 'sh.status()'
-  register: cluster_status
-  when: data_rs_status.rc != 0 and "isMaster" not in data_rs_status.stdout
-
-- name: Show cluster status
-  debug:
-    var: cluster_status.stdout
-  when: data_rs_status.rc != 0 and "isMaster" not in data_rs_status.stdout
+    seconds: 40

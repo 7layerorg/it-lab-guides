@@ -1,119 +1,80 @@
 ---
-- name: Initialize MongoDB Replica Set
+- name: Initialize config server replica set
+  hosts: 192.168.121.106
+  become: yes
+  vars_files:
+    - roles/mongodb_cluster/defaults/main.yml
+  tasks:
+    - name: Initialize config replica set
+      shell: |
+        mongosh --port {{ config_port }} --quiet --eval '
+        rs.initiate({
+          _id: "{{ config_replset }}",
+          configsvr: true,
+          members: [
+            { _id: 0, host: "192.168.121.106:{{ config_port }}" },
+            { _id: 1, host: "192.168.121.107:{{ config_port }}" },
+            { _id: 2, host: "192.168.121.108:{{ config_port }}" }
+          ]
+        })
+        '
+      register: config_rs_init
+      
+    - name: Show result
+      debug:
+        var: config_rs_init.stdout
+
+    - name: Wait for replica set
+      pause:
+        seconds: 30
+
+- name: Initialize data replica set
   hosts: 192.168.121.101
   become: yes
   vars_files:
     - roles/mongodb_cluster/defaults/main.yml
-
   tasks:
-    - name: Initialize config server replica set
-      block:
-        - name: Check if config server replica set is initialized
-          shell: |
-            mongosh --port {{ config_port }} --quiet --eval 'rs.status()["ok"]'
-          register: config_rs_status
-          failed_when: '"true" not in config_rs_status.stdout'
+    - name: Initialize data replica set
+      shell: |
+        mongosh --port {{ data_port }} --quiet --eval '
+        rs.initiate({
+          _id: "{{ data_replset }}",
+          members: [
+            { _id: 0, host: "192.168.121.101:{{ data_port }}" },
+            { _id: 1, host: "192.168.121.102:{{ data_port }}" },
+            { _id: 2, host: "192.168.121.103:{{ data_port }}" },
+            { _id: 3, host: "192.168.121.104:{{ data_port }}" },
+            { _id: 4, host: "192.168.121.105:{{ data_port }}" },
+            { _id: 5, host: "192.168.121.108:{{ arbiter_port }}", arbiterOnly: true }
+          ]
+        })
+        '
+      register: data_rs_init
+      
+    - name: Show result
+      debug:
+        var: data_rs_init.stdout
 
-        - name: Initialize config server replica set (if not already initialized)
-          shell: |
-            mongosh --port {{ config_port }} --quiet --eval '
-            rs.initiate({
-              _id: "{{ config_replset }}",
-              configsvr: true,
-              members: [
-                { _id: 0, host: "192.168.121.106:{{ config_port }}" },
-                { _id: 1, host: "192.168.121.107:{{ config_port }}" },
-                { _id: 2, host: "192.168.121.108:{{ config_port }}" }
-              ]
-            })
-            '
-          register: config_rs_init
-
-        - name: Show result of config server initialization
-          debug:
-            var: config_rs_init.stdout_lines
-
-        - name: Wait for config replica set
-          pause:
-            seconds: 30
-
-      rescue:
-        - name: Handle error in initializing config server replica set
-          debug:
-            msg: "Failed to initialize config server replica set"
-
-    - name: Initialize data server replica set
-      block:
-        - name: Check if data server replica set is initialized
-          shell: |
-            mongosh --port {{ data_port }} --quiet --eval 'rs.status()["ok"]'
-          register: data_rs_status
-          failed_when: '"true" not in data_rs_status.stdout'
-
-        - name: Initialize data server replica set (if not already initialized)
-          shell: |
-            mongosh --port {{ data_port }} --quiet --eval '
-            rs.initiate({
-              _id: "{{ data_replset }}",
-              members: [
-                { _id: 0, host: "192.168.121.101:{{ data_port }}" },
-                { _id: 1, host: "192.168.121.102:{{ data_port }}" },
-                { _id: 2, host: "192.168.121.103:{{ data_port }}" },
-                { _id: 3, host: "192.168.121.104:{{ data_port }}" },
-                { _id: 4, host: "192.168.121.105:{{ data_port }}" },
-                { _id: 5, host: "192.168.121.108:{{ arbiter_port }}", arbiterOnly: true }
-              ]
-            })
-            '
-          register: data_rs_init
-
-        - name: Show result of data server initialization
-          debug:
-            var: data_rs_init.stdout_lines
-
-        - name: Wait for data replica set
-          pause:
-            seconds: 30
-
-      rescue:
-        - name: Handle error in initializing data server replica set
-          debug:
-            msg: "Failed to initialize data server replica set"
+    - name: Wait for replica set
+      pause:
+        seconds: 30
 
     - name: Add shard to cluster
-      block:
-        - name: Check if shard is already added
-          shell: |
-            mongosh --port {{ config_port }} --quiet --eval 'db.adminCommand({ listShards: 1 }).shards'
-          register: shards_list
-
-        - name: Add shard if not already added
-          shell: |
-            mongosh --port {{ config_port }} --quiet --eval 'sh.addShard("rs0/192.168.121.101:{{ data_port }},192.168.121.102:{{ data_port }},192.168.121.103:{{ data_port }},192.168.121.104:{{ data_port }},192.168.121.105:{{ data_port }},192.168.121.108:{{ arbiter_port }}")'
-          when: shards_list.stdout | from_json | not(shards_list.stdout | from_json | any(attribute='host' == 'rs0/192.168.121.101:{{ data_port }}'))
-          register: add_shard_result
-
-        - name: Show result of adding shard
-          debug:
-            var: add_shard_result.stdout_lines
-
-      rescue:
-        - name: Handle error in adding shard to cluster
-          debug:
-            msg: "Failed to add shard to cluster"
+      shell: |
+        mongosh --port {{ mongos_port }} --quiet --eval '
+        sh.addShard("{{ data_replset }}/192.168.121.101:{{ data_port }},192.168.121.102:{{ data_port }},192.168.121.103:{{ data_port }},192.168.121.104:{{ data_port }},192.168.121.105:{{ data_port }}")
+        '
+      register: shard_add
+      
+    - name: Show shard add result
+      debug:
+        var: shard_add.stdout
 
     - name: Check cluster status
-      block:
-        - name: Check if cluster is ready
-          shell: |
-            mongosh --port {{ config_port }} --quiet --eval 'db.adminCommand({ replSetGetStatus: 1 }).ok'
-          register: cluster_status
-
-        - name: Show result of checking cluster status
-          debug:
-            var: cluster_status.stdout_lines
-
-      rescue:
-        - name: Handle error in checking cluster status
-          debug:
-            msg: "Failed to check cluster status"
+      shell: |
+        mongosh --port {{ mongos_port }} --quiet --eval 'sh.status()'
+      register: cluster_status
+      
+    - name: Show cluster status
+      debug:
+        var: cluster_status.stdout

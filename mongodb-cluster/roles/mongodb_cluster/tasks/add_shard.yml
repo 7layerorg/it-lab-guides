@@ -1,0 +1,18 @@
+---
+# Task to add shard to cluster on active mongos node
+
+- name: Add data replica set to mongos
+  shell: |
+    mongosh --host 192.168.121.101 --port {{ mongos_port }} --quiet --eval '
+    sh.addShard("{{ data_replset }}/192.168.121.101:{{ data_port }},192.168.121.102:{{ data_port }},192.168.121.103:{{ data_port }},192.168.121.104:{{ data_port }},192.168.121.105:{{ data_port }}")
+    sh.status()
+    '
+  register: shard_add
+  retries: 10         # try 10 times
+  delay: 15           # wait 15 seconds between retries
+  until: shard_add.rc == 0
+  ignore_errors: yes
+
+- name: Show shard add result
+  debug:
+    var: shard_add.stdout_lines

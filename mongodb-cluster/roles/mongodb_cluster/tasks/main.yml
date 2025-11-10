@@ -15,14 +15,56 @@
   include_tasks: arbiter.yml
   when: inventory_hostname in groups['arbiter']
 
+#- name: Initialize config server replica set
+#  include_tasks: init_config.yml
+#  when: inventory_hostname == "192.168.121.106"
+  
+#- name: Initialize data replica set
+#  include_tasks: init_data.yml
+#  when: inventory_hostname == "192.168.121.101"
+  
+
 - name: Initialize config server replica set
   include_tasks: init_config.yml
   when: inventory_hostname == "192.168.121.106"
-  
+
+- name: Wait for config replica set
+  delegate_to: 192.168.121.106
+  shell: |
+    mongosh --port {{ config_port }} --quiet --eval 'rs.status().ok'
+  register: config_ready
+  retries: 10
+  delay: 10
+  until: config_ready.stdout.find("1") != -1
+  when: inventory_hostname == "192.168.121.106"
+
 - name: Initialize data replica set
   include_tasks: init_data.yml
   when: inventory_hostname == "192.168.121.101"
-  
+
+- name: Force 101 to be primary
+  shell: |
+    mongosh --host 192.168.121.101 --port {{ data_port }} --quiet --eval '
+    cfg = rs.conf();
+    for (i = 0; i < cfg.members.length; i++) {
+      if (cfg.members[i].host.startsWith("192.168.121.101")) {
+        cfg.members[i].priority = 2;
+      } else {
+        cfg.members[i].priority = 1;
+      }
+    }
+    rs.reconfig(cfg, {force: true});
+    '
+  ignore_errors: yes
+
+
+
+# Add shard after delay
+- name: Add shard to cluster
+  include_tasks: add_shard.yml
+  when: inventory_hostname == "192.168.121.101"
+
+
 - name: Include mongos tasks
   include_tasks: mongos.yml
   when: inventory_hostname in groups['mongos_routers']

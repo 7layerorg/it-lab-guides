@@ -1,35 +1,30 @@
 ---
-# Initialize Config Server Replica Set
+# Force initialize Config Server Replica Set — always runs
 
-- name: Check if config server is already initialized
-  shell: |
-    mongosh --port {{ config_port }} --quiet --eval 'rs.status()'
-  register: config_rs_status
-  failed_when: config_rs_status.rc != 0 and "isMaster" not in config_rs_status.stdout
-  changed_when: false
-
-- name: Initialize config server replica set
+- name: Attempt to initialize config server replica set (ignore previous state)
   shell: |
     mongosh --port {{ config_port }} --quiet --eval '
-    rs.initiate({
-      _id: "{{ config_replset }}",
-      configsvr: true,
-      members: [
-        { _id: 0, host: "192.168.121.106:{{ config_port }}" },
-        { _id: 1, host: "192.168.121.107:{{ config_port }}" },
-        { _id: 2, host: "192.168.121.108:{{ config_port }}" }
-      ]
-    })
+    try {
+      rs.initiate({
+        _id: "{{ config_replset }}",
+        configsvr: true,
+        members: [
+          { _id: 0, host: "192.168.121.106:{{ config_port }}" },
+          { _id: 1, host: "192.168.121.107:{{ config_port }}" },
+          { _id: 2, host: "192.168.121.108:{{ config_port }}" }
+        ]
+      })
+    } catch (e) {
+      print("Replica set may already be initialized: " + e)
+    }
     '
   register: config_rs_init
-  when: config_rs_status.rc != 0 and "isMaster" not in config_rs_status.stdout
+  ignore_errors: yes
 
 - name: Show config replica set initialization result
   debug:
     var: config_rs_init.stdout
-  when: config_rs_status.rc != 0 and "isMaster" not in config_rs_status.stdout
 
 - name: Wait for config replica set to stabilize
   pause:
-    seconds: 50
-  when: config_rs_status.rc != 0 and "isMaster" not in config_rs_status.stdout
+    seconds: 30

@@ -19,10 +19,10 @@
         path: "{{ item }}"
         state: absent
       loop:
-        - /mnt/data/mongodb
-        - /mnt/data/mongodb-config
-        - /mnt/data/mongodb-arbiter
+        - /mnt/data/cluster
+        - /mnt/data/arbiter
         - /mnt/data/meta
+        - /mnt/data/*
         - /etc/mongodb-cls
         - /var/log/mongodb
         - /var/lib/mongo
