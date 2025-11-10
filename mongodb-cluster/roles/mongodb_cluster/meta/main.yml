@@ -2,7 +2,7 @@
 galaxy_info:
   author: Lazio
   description: MongoDB Sharded Cluster Installation
-  company: Omega IT Group Ltd
+  company: -
   license: MIT
   min_ansible_version: 2.9
   
