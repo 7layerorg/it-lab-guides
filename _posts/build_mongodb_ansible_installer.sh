@@ -624,7 +624,7 @@ cat > $INSTALL_DIR/roles/$ROLE_NAME/meta/main.yml <<'EOF'
 galaxy_info:
   author: Lazio
   description: MongoDB Sharded Cluster Installation
-  company: Omega IT Group Ltd
+  company: NA
   license: MIT
   min_ansible_version: 2.9
   
