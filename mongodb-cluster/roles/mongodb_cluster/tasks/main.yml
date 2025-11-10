@@ -15,6 +15,14 @@
   include_tasks: arbiter.yml
   when: inventory_hostname in groups['arbiter']
 
+- name: Initialize config server replica set
+  include_tasks: init_config.yml
+  when: inventory_hostname == "192.168.121.106"
+  
+- name: Initialize data replica set
+  include_tasks: init_data.yml
+  when: inventory_hostname == "192.168.121.101"
+  
 - name: Include mongos tasks
   include_tasks: mongos.yml
   when: inventory_hostname in groups['mongos_routers']

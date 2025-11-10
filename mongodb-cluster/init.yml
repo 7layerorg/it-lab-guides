@@ -35,7 +35,7 @@
 
     - name: Wait for replica set
       pause:
-        seconds: 30
+        seconds: 50
       when: config_rs_status.rc != 0 and "isMaster" not in config_rs_status.stdout
 
 - name: Initialize data replica set
@@ -76,7 +76,7 @@
 
     - name: Wait for replica set
       pause:
-        seconds: 30
+        seconds: 50
       when: data_rs_status.rc != 0 and "isMaster" not in data_rs_status.stdout
 
     - name: Add shard to cluster

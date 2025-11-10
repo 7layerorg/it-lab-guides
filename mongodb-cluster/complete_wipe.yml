@@ -22,6 +22,7 @@
         - /mnt/data/mongodb
         - /mnt/data/mongodb-config
         - /mnt/data/mongodb-arbiter
+        - /mnt/data/meta
         - /etc/mongodb-cls
         - /var/log/mongodb
         - /var/lib/mongo
