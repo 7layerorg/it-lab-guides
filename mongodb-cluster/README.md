@@ -17,23 +17,20 @@
         └── meta/             # Role metadata
 ```
 
-## Installation Steps
-
-### 1. Deploy MongoDB components
-```bash
-cd /opt/mongodb-cluster
-ansible-playbook site.yml
-```
+## 1. Installation Steps
 
 This single playbook:
 - Installs MongoDB on all nodes
 - Creates all directories
 - Deploys configurations
 - Starts all services
+```bash
+ansible-playbook prep_systems.yml -v
+```
 
 ### 2. Initialize cluster
 ```bash
-ansible-playbook init_cluster.yml
+ansible-playbook site.yml -v
 ```
 
 This initializes:
