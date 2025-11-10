@@ -1,0 +1,56 @@
+---
+- name: Create config data directory
+  file:
+    path: "{{ base_data_dir }}/meta"
+    state: directory
+    owner: mongod
+    group: mongod
+    mode: '0755'
+
+- name: Create log directory
+  file:
+    path: "{{ log_dir }}"
+    state: directory
+    owner: mongod
+    group: mongod
+    mode: '0755'
+
+- name: Create config directory
+  file:
+    path: "{{ config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy config server config
+  template:
+    src: mongodb_meta.conf.j2
+    dest: "{{ config_dir }}/mongodb_meta.conf"
+    owner: mongod
+    group: mongod
+    mode: '0644'
+  notify: restart mongodb-meta
+
+- name: Create systemd service
+  template:
+    src: mongodb-meta.service.j2
+    dest: /etc/systemd/system/mongodb-meta.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart mongodb-meta
+
+- name: Enable and start config server service
+  systemd:
+    name: mongodb-meta
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for config server port
+  wait_for:
+    port: "{{ config_port }}"
+    delay: 5
+    timeout: 60
+

@@ -1,0 +1,33 @@
+---
+# MongoDB version
+mongodb_version: "7.0"
+
+# Directories
+base_data_dir: "/mnt/data"
+log_dir: "/var/log/mongodb"
+config_dir: "/etc/mongodb-cls"
+
+# Replica Sets
+data_replset: "rs01"
+config_replset: "configReplSet"
+
+# Ports
+data_port: 27017
+config_port: 27019
+arbiter_port: 27014
+mongos_port: 27020
+
+# Config servers
+config_servers_list:
+  - "192.168.121.106:27019"
+  - "192.168.121.107:27019"
+  - "192.168.121.108:27019"
+config_servers_str: "configReplSet/192.168.121.106:27019,192.168.121.107:27019,192.168.121.108:27019"
+
+# Data nodes
+data_nodes_list:
+  - "192.168.121.101:27017"
+  - "192.168.121.102:27017"
+  - "192.168.121.103:27017"
+  - "192.168.121.104:27017"
+  - "192.168.121.105:27017"

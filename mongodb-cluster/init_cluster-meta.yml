@@ -1,0 +1,30 @@
+---
+- name: Initialize config server replica set
+  hosts: 192.168.121.106
+  become: yes
+  vars_files:
+    - roles/mongodb_cluster/defaults/main.yml
+  tasks:
+    - name: Initialize config replica set
+      shell: |
+        mongosh --port {{ config_port }} --quiet --eval '
+        rs.initiate({
+          _id: "{{ config_replset }}",
+          configsvr: true,
+          members: [
+            { _id: 0, host: "192.168.121.106:{{ config_port }}" },
+            { _id: 1, host: "192.168.121.107:{{ config_port }}" },
+            { _id: 2, host: "192.168.121.108:{{ config_port }}" }
+          ]
+        })
+        '
+      register: config_rs_init
+      
+    - name: Show result
+      debug:
+        var: config_rs_init.stdout
+
+    - name: Wait for replica set
+      pause:
+        seconds: 30
+

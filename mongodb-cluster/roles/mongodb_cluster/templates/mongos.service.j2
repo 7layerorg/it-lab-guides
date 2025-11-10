@@ -1,0 +1,26 @@
+[Unit]
+Description=Mongos Router
+After=network.target
+
+[Service]
+#Type=forking
+User=mongod
+Group=mongod
+ExecStart=/usr/bin/mongos --config {{ config_dir }}/mongos.conf
+# Create /run/mongod at startup
+PIDFile=/run/mongodb-mongos/mongod.pid
+# Limits
+LimitFSIZE=infinity
+LimitCPU=infinity
+LimitAS=infinity
+LimitNOFILE=64000
+LimitNPROC=64000
+LimitMEMLOCK=infinity
+TasksMax=infinity
+TasksAccounting=false
+RuntimeDirectory=mongodb-mongos
+RuntimeDirectoryMode=0755
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

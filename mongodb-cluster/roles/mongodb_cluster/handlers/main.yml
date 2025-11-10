@@ -1,0 +1,24 @@
+---
+- name: restart mongodb-cluster
+  systemd:
+    name: mongodb-cluster
+    state: restarted
+    daemon_reload: yes
+
+- name: restart mongodb-meta
+  systemd:
+    name: mongodb-meta
+    state: restarted
+    daemon_reload: yes
+
+- name: restart mongodb-arbiter
+  systemd:
+    name: mongodb-arbiter
+    state: restarted
+    daemon_reload: yes
+
+- name: restart mongos
+  systemd:
+    name: mongos
+    state: restarted
+    daemon_reload: yes

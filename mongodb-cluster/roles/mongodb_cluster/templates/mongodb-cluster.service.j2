@@ -1,0 +1,25 @@
+[Unit]
+Description=MongoDB Data Node
+After=network.target
+
+[Service]
+#Type=forking
+User=mongod
+Group=mongod
+ExecStart=/usr/bin/mongod --config {{ config_dir }}/mongodb_cluster.conf
+PIDFile=/run/mongodb-cluster/mongod.pid
+RuntimeDirectory=mongodb-cluster
+RuntimeDirectoryMode=0755
+Restart=on-failure
+RestartSec=5
+
+
+# Resource limits
+LimitNOFILE=64000
+LimitNPROC=64000
+LimitMEMLOCK=infinity
+TasksMax=infinity
+TasksAccounting=false
+
+[Install]
+WantedBy=multi-user.target

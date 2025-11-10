@@ -1,0 +1,21 @@
+storage:
+  dbPath: {{ base_data_dir }}/meta
+
+systemLog:
+  destination: file
+  path: {{ log_dir }}/mongodb_meta.log
+  logAppend: true
+
+net:
+  port: {{ config_port }}
+  bindIp: 0.0.0.0
+
+processManagement:
+  fork: false
+  pidFilePath: /var/run/mongodb-meta/mongodb_meta.pid
+
+replication:
+  replSetName: {{ config_replset }}
+
+sharding:
+  clusterRole: configsvr

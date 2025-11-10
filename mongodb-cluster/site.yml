@@ -1,0 +1,6 @@
+---
+- name: Deploy MongoDB Sharded Cluster
+  hosts: mongodb_cluster
+  become: yes
+  roles:
+    - mongodb_cluster

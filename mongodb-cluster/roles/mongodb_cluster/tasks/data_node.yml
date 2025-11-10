@@ -1,0 +1,55 @@
+---
+- name: Create data directory
+  file:
+    path: "{{ base_data_dir }}/cluster"
+    state: directory
+    owner: mongod
+    group: mongod
+    mode: '0755'
+
+- name: Create log directory
+  file:
+    path: "{{ log_dir }}"
+    state: directory
+    owner: mongod
+    group: mongod
+    mode: '0755'
+
+- name: Create config directory
+  file:
+    path: "{{ config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy data node config
+  template:
+    src: mongodb_cluster.conf.j2
+    dest: "{{ config_dir }}/mongodb_cluster.conf"
+    owner: mongod
+    group: mongod
+    mode: '0644'
+  notify: restart mongodb-cluster
+
+- name: Create systemd service
+  template:
+    src: mongodb-cluster.service.j2
+    dest: /etc/systemd/system/mongodb-cluster.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart mongodb-cluster
+
+- name: Enable and start data node service
+  systemd:
+    name: mongodb-cluster
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for data node port
+  wait_for:
+    port: "{{ data_port }}"
+    delay: 5
+    timeout: 60

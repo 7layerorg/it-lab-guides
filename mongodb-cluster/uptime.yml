@@ -1,0 +1,9 @@
+---
+- name: Prepare systems for MongoDB cluster
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Show uptime
+      command: uptime -p
+

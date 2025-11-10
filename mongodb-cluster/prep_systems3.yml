@@ -1,0 +1,11 @@
+---
+- name: Prepare systems for MongoDB cluster
+  hosts: all
+  become: yes
+  tasks:
+
+
+    - name: stop all mongo*
+      command: systemctl stop mongo*
+      ignore_errors: yes
+

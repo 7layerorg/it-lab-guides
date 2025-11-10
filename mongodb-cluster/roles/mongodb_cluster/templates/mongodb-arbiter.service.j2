@@ -1,0 +1,24 @@
+[Unit]
+Description=MongoDB Arbiter
+After=network.target
+
+[Service]
+#Type=forking
+User=mongod
+Group=mongod
+ExecStart=/usr/bin/mongod --config {{ config_dir }}/mongodb_arbiter.conf
+PIDFile=/run/mongodb-arbiter/mongodb-arbiter.pid
+RuntimeDirectory=mongodb-arbiter
+RuntimeDirectoryMode=0755
+Restart=on-failure
+RestartSec=5
+
+# Resource limits
+LimitNOFILE=64000
+LimitNPROC=64000
+LimitMEMLOCK=infinity
+TasksMax=infinity
+TasksAccounting=false
+
+[Install]
+WantedBy=multi-user.target

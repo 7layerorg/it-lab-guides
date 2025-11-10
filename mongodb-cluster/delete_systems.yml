@@ -1,0 +1,42 @@
+---
+- name: Prepare systems for MongoDB cluster
+  hosts: all
+  become: yes
+  tasks:
+
+
+    - name: Stop and disable mongod
+      systemd:
+        name: mongod
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+
+    - name: Stop and disable mongod
+      systemd:
+        name: mongodb-cluster
+        state: stopped
+      ignore_errors: yes
+
+
+    - name: Stop and disable mongod
+      systemd:
+        name: mongodb-cluster
+        state: stopped
+      ignore_errors: yes
+
+
+    - name: Stop mongodb-cluster
+      command: systemctl stop mongodb-cluster
+
+    - name: delete mongodb-cluster
+      command: systemctl stop mongo*
+
+
+    - name: delete mongodb-cluster
+      command: rm -rf /mnt/data/
+
+
+
+
+

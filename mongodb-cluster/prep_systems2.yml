@@ -1,0 +1,22 @@
+---
+- name: Prepare systems for MongoDB cluster
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Disable SELinux permanently
+      lineinfile:
+        path: /etc/selinux/config
+        regexp: '^SELINUX='
+        line: 'SELINUX=disabled'
+      register: selinux_config
+
+    - name: Disable SELinux immediately
+      command: setenforce 0
+      ignore_errors: yes
+
+    - name: Reboot if SELinux was changed
+      reboot:
+        reboot_timeout: 5
+#      when: selinux_config.changed
+

@@ -1,0 +1,39 @@
+---
+- name: Add MongoDB repository
+  yum_repository:
+    name: mongodb-org-7.0
+    description: MongoDB Repository
+    baseurl: https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/7.0/x86_64/
+    gpgcheck: yes
+    enabled: yes
+    gpgkey: https://www.mongodb.org/static/pgp/server-7.0.asc
+
+- name: Install MongoDB packages
+  yum:
+    name:
+      - mongodb-org
+      - mongodb-org-server
+      - mongodb-org-mongos
+      - mongodb-org-tools
+      - mongodb-mongosh
+    state: present
+
+- name: Set SELinux to permissive
+  selinux:
+    state: permissive
+    policy: targeted
+  ignore_errors: yes
+
+- name: Open firewall ports
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop:
+    - "{{ data_port }}/tcp"
+    - "{{ config_port }}/tcp"
+    - "{{ arbiter_port }}/tcp"
+    - "{{ mongos_port }}/tcp"
+  when: ansible_facts.services['firewalld.service'] is defined
+  ignore_errors: yes

@@ -1,0 +1,20 @@
+---
+- name: Include installation tasks
+  include_tasks: install.yml
+  when: inventory_hostname in groups['data_nodes'] or inventory_hostname in groups['config_servers']
+
+- name: Include data node tasks
+  include_tasks: data_node.yml
+  when: inventory_hostname in groups['data_nodes']
+
+- name: Include config server tasks
+  include_tasks: config_server.yml
+  when: inventory_hostname in groups['config_servers']
+
+- name: Include arbiter tasks
+  include_tasks: arbiter.yml
+  when: inventory_hostname in groups['arbiter']
+
+- name: Include mongos tasks
+  include_tasks: mongos.yml
+  when: inventory_hostname in groups['mongos_routers']
