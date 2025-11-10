@@ -108,6 +108,9 @@ EOF
   end
 end
 
+#END of the Vagrant file
+
+#########
 
 Initialize a VM:
 
@@ -137,3 +140,10 @@ for i in {1..8}; do   ssh-copy-id -i ~/.ssh/id_ed25519.pub vagrant@ol9-node$i; d
 Here you need to type the password in each nodes.
 Now test them second and the last if those good then all good to go to go to the next level and create the MongoDB cluster.
 Exit here and go back to the Ansible node.
+
+####
+# Add the Vagrant sources to your profile:
+####
+
+echo 'alias vagrant="/usr/bin/vagrant"' >> ~/.bashrc
+source ~/.bashrc
