@@ -1,0 +1,36 @@
+---
+- name: Initialize config replica set (run once)
+  shell: |
+    mongosh --port {{ config_port }} --quiet --eval '
+    rs.initiate({
+      _id: "{{ config_replset }}",
+      configsvr: true,
+      members: [
+        { _id: 0, host: "192.168.121.106:{{ config_port }}" },
+        { _id: 1, host: "192.168.121.107:{{ config_port }}" },
+        { _id: 2, host: "192.168.121.108:{{ config_port }}" }
+      ]
+    })
+    '
+  register: config_rs_init
+  run_once: true
+  delegate_to: 192.168.121.106
+  when: 
+    - inventory_hostname in groups['config_servers']
+    - inventory_hostname == groups['config_servers'][0]
+
+- name: Show config RS init result
+  debug:
+    var: config_rs_init.stdout
+  run_once: true
+  when: 
+    - inventory_hostname in groups['config_servers']
+    - inventory_hostname == groups['config_servers'][0]
+
+- name: Wait for config replica set to stabilize
+  pause:
+    seconds: 30
+  run_once: true
+  when: 
+    - inventory_hostname in groups['config_servers']
+    - inventory_hostname == groups['config_servers'][0]

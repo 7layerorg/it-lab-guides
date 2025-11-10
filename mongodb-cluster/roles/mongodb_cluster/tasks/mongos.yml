@@ -40,8 +40,21 @@
     state: started
     daemon_reload: yes
 
-- name: Wait for mongos port
-  wait_for:
-    port: "{{ mongos_port }}"
-    delay: 5
-    timeout: 60
+#- name: Wait for mongos port
+#  wait_for:
+#    port: "{{ mongos_port }}"
+#    delay: 5
+#    timeout: 60
+
+- name: Restart mongos service
+  systemd:
+    name: mongos
+    enabled: yes
+    state: restarted
+#    daemon_reload: yes
+
+#- name: Wait for mongos port
+#  wait_for:
+#    port: "{{ mongos_port }}"
+#    delay: 15
+#    timeout: 15

@@ -16,3 +16,4 @@
 - name: Show shard add result
   debug:
     var: shard_add.stdout_lines
+

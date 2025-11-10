@@ -24,24 +24,19 @@ This single playbook:
 - Creates all directories
 - Deploys configurations
 - Starts all services
-```bash
-ansible-playbook prep_systems.yml -v
-```
-
-### 2. Initialize cluster
-```bash
-ansible-playbook site.yml -v
-```
-
-This initializes:
-- Config server replica set
-- Data node replica set with arbiter
+- Setups Config server replica set
+- Setups Data node replica set with arbiter
 - Adds shard to cluster
 
-### 3. Verify
 ```bash
-mongosh --host 192.168.121.101 --port 27020
-sh.status()
+./install.sh
+```
+
+
+### 2. Verify
+```bash
+mongosh --host 192.168.121.108 --port 27014
+rs.status()
 ```
 
 ## Cluster Topology
