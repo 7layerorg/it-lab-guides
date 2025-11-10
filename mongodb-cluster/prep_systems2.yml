@@ -18,5 +18,4 @@
     - name: Reboot if SELinux was changed
       reboot:
         reboot_timeout: 5
-#      when: selinux_config.changed
 
