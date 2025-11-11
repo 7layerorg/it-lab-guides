@@ -10,7 +10,7 @@ ansible -m ping $DATA_NODE_1
 ansible -m ping $CONFIG_SERVER_NODE_1
 ansible -m ping all
 
-#ansible-playbookprep_systems.yml
+ansible-playbookprep_systems.yml
 ansible-playbook site.yml -vv
 
 
