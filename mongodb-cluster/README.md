@@ -1,18 +1,19 @@
 # MongoDB Sharded Cluster – Ansible Galaxy Role
 ## Proper Galaxy Role Structure
 
-This repository provides a practical, step-by-step guide for deploying and testing a MongoDB replica set cluster in a lab environment with Ansible. 
-It has been validated on [test environment details: Oracle Server Linux 9.3, MongoDB 7.0.25.], and is intended for IT professionals, students, and anyone looking to understand the setup and operational basics of MongoDB sharded or replicated clusters.
+This repository provides a practical, step-by-step guide for deploying and testing a MongoDB replica set cluster in a lab environment using Ansible. Validated in Oracle Server Linux 9.3, MongoDB 7.0.2.5. Designed for IT professionals and students seeking hands-on experience with MongoDB sharding and replication fundamentals.
 
-Supports: Multi-node cluster setup (replica set), Vagrant-based deployments, easy local or VM environment testing.
-Requirements: Basic familiarity with Vagrant, Linux command line, and MongoDB concepts.
-Cluster validation: All instructions have been fully tested for repeatable and reliable cluster formation; troubleshooting steps are included for common issues.
-Purpose: Suitable for training, demonstrations, or lab scenarios—not intended for production use but can be further customized for Prod environment.
+###Features:
 
-This is a fully operational prototype, minimal baseline test cluster to see how it works and how to deploy it via Ansible.
-Current deployment has no user setup neither secure communication which needed in Production deployment.
-The user and secure based communication will be deployed later on in a sub article.
+- Multi-node cluster setup (replica set)
+- Vagrant-based or direct deployment; easy VM/lab adaptation
+- Reliable, repeatable installation with thoroughly tested Ansible playbooks
+- Includes troubleshooting notes for common cluster setup issues
+###Requirements: Familiarity with Vagrant (optional), Linux CLI, and fundamental MongoDB concepts.
 
+####Note: This project implements a minimal, operational test cluster for educational and lab purposes. Production deployments require additional setup, including user authentication and SSL for secure communications.
+
+##Directory Structure:
 
 ```
 /opt/mongodb-cluster/
