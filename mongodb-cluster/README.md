@@ -2,6 +2,9 @@
 
 ## Proper Galaxy Role Structure
 
+This is just a baseline test cluster but fully functional.
+Need user setup later and SSL setup also for secured communication if you need this in Prod.
+
 ```
 /opt/mongodb-cluster/
 ├── ansible.cfg
