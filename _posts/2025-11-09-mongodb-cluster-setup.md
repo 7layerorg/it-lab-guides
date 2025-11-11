@@ -22,8 +22,7 @@ This creates `/opt/mongodb-cluster/` with:
 
 cd /opt/mongodb-cluster
 ansible-playbook prep_systems.yml # Install NTP, disables SELinux
-ansible-playbook site.yml         # Installs, configures, starts everything
-ansible-playbook init_cluster.yml # Initializes replica sets + shard
+ansible-playbook site.yml         # Installs, configures, starts everything and Initializes replica sets + shard
 
 ```
 
