@@ -3,17 +3,17 @@
 
 This repository provides a practical, step-by-step guide for deploying and testing a MongoDB replica set cluster in a lab environment using Ansible. Validated in Oracle Server Linux 9.3, MongoDB 7.0.2.5. Designed for IT professionals and students seeking hands-on experience with MongoDB sharding and replication fundamentals.
 
-##Features:
+### Features:
 
 - Multi-node cluster setup (replica set)
 - Vagrant-based or direct deployment; easy VM/lab adaptation
 - Reliable, repeatable installation with thoroughly tested Ansible playbooks
 - Includes troubleshooting notes for common cluster setup issues
-##Requirements: Familiarity with Vagrant (optional), Linux CLI, and fundamental MongoDB concepts.
+### Requirements: Familiarity with Vagrant (optional), Linux CLI, and fundamental MongoDB concepts.
 
-##Note: This project implements a minimal, operational test cluster for educational and lab purposes. Production deployments require additional setup, including user authentication and SSL for secure communications.
+### Note: This project implements a minimal, operational test cluster for educational and lab purposes. Production deployments require additional setup, including user authentication and SSL for secure communications.
 
-##Directory Structure:
+### Directory Structure:
 
 ```
 /opt/mongodb-cluster/
