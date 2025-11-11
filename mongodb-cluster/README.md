@@ -34,10 +34,23 @@ This single playbook:
 
 
 ### 2. Verify
+
+Arbiter:
 ```bash
 mongosh --host 192.168.121.108 --port 27014
 rs.status()
 ```
+Mongos Sharding:
+```bash
+mongosh --host 192.168.121.101 --port 27020
+sh.status()
+```
+Data:
+```bash
+mongosh --host 192.168.121.101 --port 27017
+rs.status()
+```
+
 
 ## Cluster Topology
 
