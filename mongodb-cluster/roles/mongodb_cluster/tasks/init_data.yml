@@ -1,26 +1,40 @@
-- name: Initialize data replica set (run on primary node)
+---
+- name: Initialize data replica set (run once)
   shell: |
     mongosh --port {{ data_port }} --quiet --eval '
-    try {
-      rs.initiate({
-        _id: "{{ data_replset }}",
-        members: [
-          { _id: 0, host: "192.168.121.101:{{ data_port }}" },
-          { _id: 1, host: "192.168.121.102:{{ data_port }}" },
-          { _id: 2, host: "192.168.121.103:{{ data_port }}" },
-          { _id: 3, host: "192.168.121.104:{{ data_port }}" },
-          { _id: 4, host: "192.168.121.105:{{ data_port }}" },
-          { _id: 5, host: "192.168.121.108:{{ arbiter_port }}", arbiterOnly: true }
-        ]
-      })
-    } catch (e) {
-      print("Replica set may already be initialized: " + e)
-    }
-    rs.status()
+    rs.initiate({
+      _id: "{{ data_replset }}",
+      members: [
+        { _id: 0, host: "192.168.121.101:{{ data_port }}" },
+        { _id: 1, host: "192.168.121.102:{{ data_port }}" },
+        { _id: 2, host: "192.168.121.103:{{ data_port }}" },
+        { _id: 3, host: "192.168.121.104:{{ data_port }}" },
+        { _id: 4, host: "192.168.121.105:{{ data_port }}" },
+        { _id: 5, host: "192.168.121.108:{{ arbiter_port }}", arbiterOnly: true }
+      ]
+    })
     '
   register: data_rs_init
-  ignore_errors: yes
+  run_once: true
+  delegate_to: 192.168.121.101
+  when: 
+    - inventory_hostname in groups['data_nodes']
+    - inventory_hostname == groups['data_nodes'][0]
 
-- name: Pause for replica set stabilization
+- name: Show data RS init result
+  debug:
+    var: data_rs_init.stdout
+  run_once: true
+  when: 
+    - inventory_hostname in groups['data_nodes']
+    - inventory_hostname == groups['data_nodes'][0]
+
+- name: Wait for data replica set to stabilize
   pause:
-    seconds: 40
+    seconds: 50
+  run_once: true
+  when: 
+    - inventory_hostname in groups['data_nodes']
+    - inventory_hostname == groups['data_nodes'][0]
+
+

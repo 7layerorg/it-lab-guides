@@ -2,7 +2,7 @@
 galaxy_info:
   author: Lazio
   description: MongoDB Sharded Cluster Installation
-  company: -
+  company: qwerty
   license: MIT
   min_ansible_version: 2.9
   

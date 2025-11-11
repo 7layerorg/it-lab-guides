@@ -19,14 +19,19 @@
   include_tasks: mongos.yml
   when: inventory_hostname in groups['mongos_routers']
 
-#- name: Initialize config server replica set
-#  include_tasks: init_config.yml
-#  when: inventory_hostname == "192.168.121.106"
-  
-#- name: Initialize data replica set
-#  include_tasks: init_data.yml
-#  when: inventory_hostname == "192.168.121.101"
-  
+- name: Initialize config server replica set
+  include_tasks: init_config.yml
+  when: inventory_hostname == "192.168.121.106"
+
+- name: Initialize data replica set
+  include_tasks: init_data.yml
+  when: inventory_hostname == "192.168.121.101"
+
+# Add shard after delay
+- name: Add shard to cluster
+  include_tasks: init_shard.yml
+  when: inventory_hostname == "192.168.121.101"
+
 
 #- name: Initialize config server replica set
 #  include_tasks: init_config.yml
@@ -45,10 +50,6 @@
 #    delay: 5
 #    timeout: 30
 
-# Add shard after delay
-#- name: Add shard to cluster
-#  include_tasks: add_shard.yml
-#  when: inventory_hostname == "192.168.121.101"
 
 
 

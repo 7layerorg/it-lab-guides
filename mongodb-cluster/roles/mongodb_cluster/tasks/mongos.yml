@@ -51,7 +51,7 @@
     name: mongos
     enabled: yes
     state: restarted
-#    daemon_reload: yes
+    daemon_reload: yes
 
 #- name: Wait for mongos port
 #  wait_for:

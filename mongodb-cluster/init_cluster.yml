@@ -59,6 +59,11 @@
       pause:
         seconds: 30
 
+
+
+
+
+
     - name: Add shard to cluster
       shell: |
         mongosh --port {{ mongos_port }} --quiet --eval '
