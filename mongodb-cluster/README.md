@@ -9,9 +9,9 @@ This repository provides a practical, step-by-step guide for deploying and testi
 - Vagrant-based or direct deployment; easy VM/lab adaptation
 - Reliable, repeatable installation with thoroughly tested Ansible playbooks
 - Includes troubleshooting notes for common cluster setup issues
-### Requirements: Familiarity with Vagrant (optional), Linux CLI, and fundamental MongoDB concepts.
+### Requirements: Familiarity with Vagrant (optional), Linux CLI, fundamental MongoDB concepts and Ansible knowledge.
 
-### Note: This project implements a minimal, operational test cluster for educational and lab purposes. Production deployments require additional setup, including user authentication and SSL for secure communications.
+#### Note: This project implements a minimal, operational test cluster for educational and lab purposes. Production deployments require additional setup, including user authentication and SSL for secure communications.
 
 ### Directory Structure:
 
