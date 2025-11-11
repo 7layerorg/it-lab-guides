@@ -1,4 +1,4 @@
-# MongoDB Sharded Cluster – Ansible Galaxy Role
+# MongoDB Sharded Cluster | Ansible Galaxy Role | MongoDB Cluster Ansible Installer | Quick Start
 ## Proper Galaxy Role Structure
 
 This repository provides a practical, step-by-step guide for deploying and testing a MongoDB replica set cluster in a lab environment using Ansible. Validated in Oracle Server Linux 9.3, MongoDB 7.0.2.5. Designed for IT professionals and students seeking hands-on experience with MongoDB sharding and replication fundamentals.
