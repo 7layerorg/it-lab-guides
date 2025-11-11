@@ -95,8 +95,6 @@ Done.
 - Adds shard to cluster
 
 ```bash
-And here comes the fun part:
-
 #########################
 
 mongosh --port 27017
@@ -374,9 +372,9 @@ active mongoses
 
 5 Active mongos.
 
-You need to connect always to the mongos, not to the cluster directly, I have seen this issue from several coders they made this mistake as .net for example makes the connections to the active node via checking the arbiter but that is pretty wrong!
+You need to connect always to the mongos, not to the cluster directly, I have seen this issue few times when coders connected directory to mongo port 27017, .net for example makes the connections to the active node via checking the arbiter but that is not the proper way.
 
-Mongos is the router and it makes the routing always to the active primary node and then if the primary fails it marks the wrong node and reroutes the traffic to the new primary and also marks the wrong host as dead and the counter goes down one to four. This cluster is redundant to 2 data nodes and auto heals itself just delete the wrong data and it will pull the data from the current active primary and resyncs.
+Mongos is the main router and it makes the routing always to the active primary node and then if the primary fails it marks the wrong node and reroutes the traffic to the new primary and also marks the wrong host as dead and the counter goes down in this cluster to four. This cluster is redundant to 2 data nodes and auto heals itself just delete the wrong data and it will pull the data from the current active primary and resyncs.
 
 
 
