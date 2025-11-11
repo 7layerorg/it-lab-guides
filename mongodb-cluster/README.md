@@ -1,4 +1,4 @@
-# MongoDB Sharded Cluster - Ansible Galaxy Role
+# MongoDB Sharded Cluster – Ansible Galaxy Role
 ## Proper Galaxy Role Structure
 
 This repository provides a practical, step-by-step guide for deploying and testing a MongoDB replica set cluster in a lab environment with Ansible. 
