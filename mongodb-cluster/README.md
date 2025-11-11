@@ -1,6 +1,13 @@
 # MongoDB Sharded Cluster - Ansible Galaxy Role
-
 ## Proper Galaxy Role Structure
+
+This repository provides a practical, end-to-end guide for deploying and testing a MongoDB replica set cluster in a lab environment. 
+It has been validated on [test environment details: Oracle Server Linux 9.3, MongoDB 7.0.25.], and is intended for IT professionals, students, and anyone looking to understand the setup and operational basics of MongoDB sharded or replicated clusters.
+
+Supports: Multi-node cluster setup (replica set), Vagrant-based deployments, easy local or VM environment testing.
+Requirements: Basic familiarity with Vagrant, Linux command line, and MongoDB concepts.
+Cluster validation: All instructions have been fully tested for repeatable and reliable cluster formation; troubleshooting steps are included for common issues.
+Purpose: Suitable for training, demonstrations, or lab scenarios—not intended for production use but can be uptuned.
 
 This is just a baseline test cluster but fully functional.
 Need user setup later and SSL setup also for secured communication if you need this in Prod.
