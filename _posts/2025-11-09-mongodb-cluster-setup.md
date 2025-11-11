@@ -1,14 +1,5 @@
 # MongoDB Cluster Ansible Installer - Quick Start
 
-```bash
-
-## On Ansible Host (192.168.121.100)
-
-### Step 1: Run the builder (creates everything)
-```bash
-cd /opt
-sudo ./build_mongodb_ansible_installer.sh
-```
 
 This creates `/opt/mongodb-cluster/` with:
 - Inventory (8 nodes)
@@ -17,7 +8,7 @@ This creates `/opt/mongodb-cluster/` with:
 - 9 numbered playbooks
 - README
 
-### Step 2: Run the playbooks in order
+### Step 1: Run the playbooks in order or run install.sh
 ```bash
 
 cd /opt/mongodb-cluster
@@ -26,7 +17,7 @@ ansible-playbook site.yml         # Installs, configures, starts everything and 
 
 ```
 
-### Step 3: Test
+### Step 2: Test
 ```bash
 mongosh --host 192.168.121.101 --port 27020
 sh.status()
