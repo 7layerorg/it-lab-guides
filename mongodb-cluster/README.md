@@ -10,7 +10,9 @@ Cluster validation: All instructions have been fully tested for repeatable and r
 Purpose: Suitable for training, demonstrations, or lab scenarios—not intended for production use but can be further customized for Prod environment.
 
 This is a fully operational prototype, minimal baseline test cluster to see how it works and how to deploy it via Ansible.
-Need user setup later and SSL setup also for secured communication if you need this in Prod.
+Current deployment has no user setup neither secure communication which needed in Production deployment.
+The user and secure based communication will be deployed later on in a sub article.
+
 
 ```
 /opt/mongodb-cluster/
