@@ -30,3 +30,4 @@ mongos_routers
 ansible_user=vagrant
 ansible_become=yes
 ansible_become_method=sudo
+

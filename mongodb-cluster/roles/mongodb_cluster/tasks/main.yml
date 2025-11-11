@@ -33,23 +33,6 @@
   when: inventory_hostname == "192.168.121.101"
 
 
-#- name: Initialize config server replica set
-#  include_tasks: init_config.yml
-#  when: inventory_hostname in groups['config_servers']
-#  when: inventory_hostname == "192.168.121.106"
-
-#- name: Initialize data replica set
-#  include_tasks: init_data.yml
-#  when: inventory_hostname in groups['data_nodes']
-#  when: inventory_hostname == "192.168.121.101"
-
-#- name: Wait for mongos to be ready
-#  wait_for:
-#    host: 192.168.121.101
-#    port: 27020
-#    delay: 5
-#    timeout: 30
-
 
 
 

@@ -5,21 +5,18 @@
     rs.initiate({
       _id: "{{ data_replset }}",
       members: [
-        { _id: 0, host: "192.168.121.101:{{ data_port }}" },
-        { _id: 1, host: "192.168.121.102:{{ data_port }}" },
-        { _id: 2, host: "192.168.121.103:{{ data_port }}" },
-        { _id: 3, host: "192.168.121.104:{{ data_port }}" },
-        { _id: 4, host: "192.168.121.105:{{ data_port }}" },
-        { _id: 5, host: "192.168.121.108:{{ arbiter_port }}", arbiterOnly: true }
+        { _id: 0, host: "{{ data_node_1 }}:{{ data_port }}" },
+        { _id: 1, host: "{{ data_node_2 }}:{{ data_port }}" },
+        { _id: 2, host: "{{ data_node_3 }}:{{ data_port }}" },
+        { _id: 3, host: "{{ data_node_4 }}:{{ data_port }}" },
+        { _id: 4, host: "{{ data_node_5 }}:{{ data_port }}" },
+        { _id: 5, host: "{{ arbiter_server_node_1 }}:{{ arbiter_port }}", arbiterOnly: true }
       ]
     })
     '
   register: data_rs_init
   run_once: true
   delegate_to: 192.168.121.101
-  when: 
-    - inventory_hostname in groups['data_nodes']
-    - inventory_hostname == groups['data_nodes'][0]
 
 - name: Show data RS init result
   debug:

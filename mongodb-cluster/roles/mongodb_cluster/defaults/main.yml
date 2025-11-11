@@ -24,7 +24,7 @@ config_servers_list:
   - "192.168.121.108:27019"
 config_servers_str: "configReplSet/192.168.121.106:27019,192.168.121.107:27019,192.168.121.108:27019"
 
-# Data nodes
+# Data nodes + Ports
 data_nodes_list:
   - "192.168.121.101:27017"
   - "192.168.121.102:27017"
@@ -32,14 +32,14 @@ data_nodes_list:
   - "192.168.121.104:27017"
   - "192.168.121.105:27017"
 
-# Data Nodes
+# Data Nodes:
 data_node_1: "192.168.121.101"
 data_node_2: "192.168.121.102"
 data_node_3: "192.168.121.103"
 data_node_4: "192.168.121.104"
 data_node_5: "192.168.121.105"
 
-# Config servers
+# Config servers:
 config_server_node_1: "192.168.121.106"
 config_server_node_2: "192.168.121.107"
 config_server_node_3: "192.168.121.108"

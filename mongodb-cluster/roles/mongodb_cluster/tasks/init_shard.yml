@@ -1,10 +1,28 @@
 ---
 # Task to add shard to cluster on active mongos node
+- name: Force election - set priority for node 101
+  shell: |
+    mongosh --port {{ data_port }} --quiet --eval '
+    cfg = rs.conf();
+    cfg.members[0].priority = 2;
+    cfg.members[1].priority = 1;
+    cfg.members[2].priority = 1;
+    cfg.members[3].priority = 1;
+    cfg.members[4].priority = 1;
+    rs.reconfig(cfg);
+    '
+  register: election_result
+  delegate_to: 192.168.121.101
+
+
+- name: Wait for election
+  pause:
+    seconds: 25
 
 - name: Add data replica set to mongos
   shell: |
     mongosh --host 192.168.121.101 --port {{ mongos_port }} --quiet --eval '
-    sh.addShard("{{ data_replset }}/192.168.121.101:{{ data_port }},192.168.121.102:{{ data_port }},192.168.121.103:{{ data_port }},192.168.121.104:{{ data_port }},192.168.121.105:{{ data_port }}")
+    sh.addShard("{{ data_replset }}/{{ data_node_1 }}:{{ data_port }},{{ data_node_2 }}:{{ data_port }},{{ data_node_3 }}:{{ data_port }},{{ data_node_4 }}:{{ data_port }},{{ data_node_5 }}:{{ data_port }}")
     sh.status()
     '
   register: shard_add
@@ -26,9 +44,6 @@
   register: cluster_status
   run_once: true
   delegate_to: 192.168.121.101
-  when: 
-    - inventory_hostname in groups['data_nodes']
-    - inventory_hostname == groups['data_nodes'][0]
 
 - name: Show cluster status
   debug:

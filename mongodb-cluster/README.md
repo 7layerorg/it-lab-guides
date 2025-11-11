@@ -34,23 +34,10 @@ This single playbook:
 
 
 ### 2. Verify
-
-Arbiter:
 ```bash
 mongosh --host 192.168.121.108 --port 27014
 rs.status()
 ```
-Mongos Sharding:
-```bash
-mongosh --host 192.168.121.101 --port 27020
-sh.status()
-```
-Data:
-```bash
-mongosh --host 192.168.121.101 --port 27017
-rs.status()
-```
-
 
 ## Cluster Topology
 
@@ -69,8 +56,3 @@ All variables in `roles/mongodb_cluster/defaults/main.yml`
 - mongodb-meta (config servers)
 - mongodb-arbiter
 - mongos
-
-References: 
-
-- https://www.mongodb.com/docs/manual/reference/configuration-options/
-- https://www.mongodb.com/docs/atlas/tutorial/create-new-cluster/
