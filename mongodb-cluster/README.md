@@ -9,7 +9,7 @@ Requirements: Basic familiarity with Vagrant, Linux command line, and MongoDB co
 Cluster validation: All instructions have been fully tested for repeatable and reliable cluster formation; troubleshooting steps are included for common issues.
 Purpose: Suitable for training, demonstrations, or lab scenarios—not intended for production use but can be further customized for Prod environment.
 
-This is just a baseline test cluster but fully functional.
+This is a fully operational prototype, minimal baseline test cluster to see how it works and how to deploy it via Ansible.
 Need user setup later and SSL setup also for secured communication if you need this in Prod.
 
 ```
