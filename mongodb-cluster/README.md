@@ -56,3 +56,8 @@ All variables in `roles/mongodb_cluster/defaults/main.yml`
 - mongodb-meta (config servers)
 - mongodb-arbiter
 - mongos
+
+References: 
+
+- https://www.mongodb.com/docs/manual/reference/configuration-options/
+- https://www.mongodb.com/docs/atlas/tutorial/create-new-cluster/
