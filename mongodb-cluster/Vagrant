@@ -1,8 +1,3 @@
----
-title: Core Lab Setup with Vagrant
-date: 2025-11-09
----
-
 ```bash
 # Objective #
 Set up a local virtual environment using **HashiCorp Vagrant** to create test servers for your IT labs.
@@ -147,3 +142,4 @@ Exit here and go back to the Ansible node.
 
 echo 'alias vagrant="/usr/bin/vagrant"' >> ~/.bashrc
 source ~/.bashrc
+```
