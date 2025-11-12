@@ -6,3 +6,95 @@ date: 2025-11-09
 # Objective #
 ## Set up a MultiMaster HA Kubernetes lab environment using **HashiCorp Vagrant** to create test servers for your IT labs.
 
+```bash
+# Vagrantfile
+# ------------------------------
+# 3‑node ETCD control‑plane + 5 workers
+# All VMs run Ubuntu 20.04, Docker + kubeadm
+# Swap is disabled automatically
+# ------------------------------
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/focal64"
+
+  # --------------------------------------------------
+  # 3 Control‑plane nodes (etcd + API server)
+  # --------------------------------------------------
+  3.times do |i|
+    config.vm.define "control#{i+1}" do |node|
+      node.vm.hostname = "control#{i+1}"
+      node.vm.network "private_network", ip: "192.168.56.#{10 + i}"
+      node.vm.provider "virtualbox" do |vb|
+        vb.memory = 4096
+        vb.cpus   = 2
+      end
+
+      node.vm.provision "shell", inline: <<-SHELL
+        # Disable swap
+        sudo swapoff -a
+        sudo sed -i '/ swap / s/^/#/' /etc/fstab
+
+        # Install Docker
+        sudo apt-get update
+        sudo apt-get install -y docker.io
+        sudo systemctl enable docker
+        sudo systemctl start docker
+
+        # Install kubeadm, kubelet, kubectl
+        sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl
+        curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+        cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+        sudo apt-get update
+        sudo apt-get install -y kubelet kubeadm kubectl
+        sudo apt-mark hold kubelet kubeadm kubectl
+
+        # Ensure kubelet can run
+        sudo systemctl enable kubelet
+        sudo systemctl start kubelet
+      SHELL
+    end
+  end
+
+  # --------------------------------------------------
+  # 5 Worker nodes
+  # --------------------------------------------------
+  5.times do |i|
+    config.vm.define "worker#{i+1}" do |node|
+      node.vm.hostname = "worker#{i+1}"
+      node.vm.network "private_network", ip: "192.168.56.#{20 + i}"
+      node.vm.provider "virtualbox" do |vb|
+        vb.memory = 4096
+        vb.cpus   = 2
+      end
+
+      node.vm.provision "shell", inline: <<-SHELL
+        # Disable swap
+        sudo swapoff -a
+        sudo sed -i '/ swap / s/^/#/' /etc/fstab
+
+        # Install Docker
+        sudo apt-get update
+        sudo apt-get install -y docker.io
+        sudo systemctl enable docker
+        sudo systemctl start docker
+
+        # Install kubeadm, kubelet, kubectl
+        sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl
+        curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+        cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+        sudo apt-get update
+        sudo apt-get install -y kubelet kubeadm kubectl
+        sudo apt-mark hold kubelet kubeadm kubectl
+
+        # Ensure kubelet can run
+        sudo systemctl enable kubelet
+        sudo systemctl start kubelet
+      SHELL
+```
+    end
+  end
+end
