@@ -6,10 +6,9 @@ date: 2025-11-09
 # Objective #
 ## Set up a MultiMaster HA Kubernetes lab environment using **HashiCorp Vagrant** to create test servers for your IT labs.
 
-### Ansible based setup will follow soon... 
+##
 
-
-
+```bash
 apt-get autoremove apt-transport-https ca-certificates curl gnupg lsb-release -y
 apt-get install apt-transport-https ca-certificates curl gnupg lsb-release -y
 apt-get autoremove docker-ce -y
