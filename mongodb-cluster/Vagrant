@@ -1,4 +1,4 @@
-```bash
+``` bash
 # Objective #
 Set up a local virtual environment using **HashiCorp Vagrant** to create test servers for your IT labs.
 
