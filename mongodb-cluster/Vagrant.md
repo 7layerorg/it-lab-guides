@@ -1,20 +1,21 @@
-```bash
 # Objective #
 Set up a local virtual environment using **HashiCorp Vagrant** to create test servers for your IT labs.
-
 
 # Steps #
 1. Install [Vagrant](https://developer.hashicorp.com/vagrant/downloads) and [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 2. Create a folder:
    ```bash
    mkdir ~/it-lab && cd ~/it-lab
+   ```
 3. Create the Vagrant file:
 
+```bash
 
 nano Vagrantfile
-
+```
 ######
 
+```bash
 Vagrant.configure("2") do |config|
   config.vm.box = "generic/oracle9"
 
@@ -102,21 +103,24 @@ EOF
     end
   end
 end
-
+```
 #END of the Vagrant file
 
 #########
 
 Initialize a VM:
 
-vagrant init ubuntu/focal64
+```bash
+vagrant init oracle9
 vagrant up
-
+```
 ########
 
 Access it:
 
+```bash
 vagrant ssh ol9-ansible
+```
 
 Now here in Ansible node create the access for Ansible so it can access all the nodes:
 
@@ -139,6 +143,7 @@ Exit here and go back to the Ansible node.
 ####
 # Add the Vagrant sources to your profile:
 ####
+```bash
 
 echo 'alias vagrant="/usr/bin/vagrant"' >> ~/.bashrc
 source ~/.bashrc
