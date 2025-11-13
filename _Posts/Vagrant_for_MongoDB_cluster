@@ -1,21 +1,3 @@
-# Objective #
-Set up a local virtual environment using **HashiCorp Vagrant** to create test servers for your IT labs.
-
-# Steps #
-1. Install [Vagrant](https://developer.hashicorp.com/vagrant/downloads) and [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
-2. Create a folder:
-   ```bash
-   mkdir ~/it-lab && cd ~/it-lab
-   ```
-3. Create the Vagrant file:
-
-```bash
-
-nano Vagrantfile
-```
-######
-
-```bash
 Vagrant.configure("2") do |config|
   config.vm.box = "generic/oracle9"
 
@@ -103,48 +85,6 @@ EOF
     end
   end
 end
-```
 #END of the Vagrant file
 
-#########
 
-Initialize a VM:
-
-```bash
-vagrant init oracle9
-vagrant up
-```
-########
-
-Access it:
-
-```bash
-vagrant ssh ol9-ansible
-```
-
-Now here in Ansible node create the access for Ansible so it can access all the nodes:
-
-ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N ""
-
-Test it on the first node:
-
-ssh-copy-id -i ~/.ssh/id_ed25519.pub vagrant@ol9-node1
-Type the vagrant password here.
-
-Then test it:
-If you can log in to the first node with no password from now on then do the mass key copy to all nodes:
-
-for i in {1..8}; do   ssh-copy-id -i ~/.ssh/id_ed25519.pub vagrant@ol9-node$i; done
-
-Here you need to type the password in each nodes.
-Now test them second and the last if those good then all good to go to go to the next level and create the MongoDB cluster.
-Exit here and go back to the Ansible node.
-
-####
-# Add the Vagrant sources to your profile:
-####
-```bash
-
-echo 'alias vagrant="/usr/bin/vagrant"' >> ~/.bashrc
-source ~/.bashrc
-```
