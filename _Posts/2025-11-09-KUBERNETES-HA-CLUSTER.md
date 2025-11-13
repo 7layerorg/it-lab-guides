@@ -1,5 +1,6 @@
 ---
 title: KUBERNETES-HA-CLUSTER WITH 3-ETCD-NODE & 5 WORKER NODE 
+Vagrant image used: https://portal.cloud.hashicorp.com/vagrant/discover/cloud-image/ubuntu-24.04
 date: 2025-11-09
 ---
 
