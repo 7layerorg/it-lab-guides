@@ -30,6 +30,10 @@ This repository provides a practical, step-by-step guide for deploying and testi
         └── meta/             # Role metadata
 ```
 
+
+![MongoDB Cluster](.mongodb-cluster.drawio.png)
+```
+
 ## 1. Installation Steps
 
 This single playbook:
