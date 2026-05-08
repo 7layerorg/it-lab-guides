@@ -1,7 +1,7 @@
 # it-lab-guides
 it-lab-guides ==>> See _Posts link
 
-- MongodDB 8 node multi-data node cluster setup on Vagrant with Ansible
+- MongodDB 8 node multi-data node cluster setup on Vagrant with Ansible https://github.com/7layerorg/it-lab-guides/blob/main/mongodb-cluster/mongodb-cluster-full.drawio.png
 - Vagrant Setup
 - Kubernetes multi master node setup 3 ETCD and 5 Workers nodes
 - KAFKA cluster
