@@ -5,7 +5,7 @@ it-lab-guides ==>> See _Posts link
 - Vagrant Setup
 - Kubernetes multi master node setup 3 ETCD and 5 Workers nodes
 - KAFKA cluster
-- HA-Proxy setup with Keepalived VIP
+- HA-Proxy setup with Keepalived VIP https://github.com/7layerorg/it-lab-guides/blob/main/7layer-ovh-bgp-wg.drawio.png
 - Nginx Proxy setup with multi backend nodes
 - MySQL how to LVM Master-Slave restore
 - CSF Firewall setup with ipset on Linux Oracle
