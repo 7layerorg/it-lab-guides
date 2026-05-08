@@ -44,3 +44,35 @@ repl_backlog_size:1048576
 repl_backlog_first_byte_offset:1
 repl_backlog_histlen:1134
 ```
+
+## Jenkins result in CI/CD pipeline:
+
+```bash
+sent 76 bytes  received 12 bytes  176.00 bytes/sec
+total size is 2,927  speedup is 33.26
++ ssh -o StrictHostKeyChecking=no root@192.168.0.165 'kubectl apply -f /tmp/redis-cluster.yaml'
+namespace/redis unchanged
+secret/redis-secret configured
+configmap/redis-master-config unchanged
+configmap/redis-replica-config unchanged
+statefulset.apps/my-redis-master configured
+service/my-redis-master unchanged
+statefulset.apps/my-redis-replica configured
+service/my-redis-replica unchanged
+service/my-redis-master-external unchanged
++ ssh -o StrictHostKeyChecking=no root@192.168.0.165 'kubectl get svc -n redis'
+NAME                       TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)          AGE
+my-redis-master            ClusterIP      10.109.200.89    <none>          6379/TCP         128m
+my-redis-master-external   LoadBalancer   10.110.216.118   10.99.101.204   6379:31226/TCP   125m
+my-redis-replica           ClusterIP      10.110.227.191   <none>          6379/TCP         128m
++ ssh -o StrictHostKeyChecking=no root@192.168.0.165 'kubectl get pods -n redis'
+NAME                 READY   STATUS    RESTARTS   AGE
+my-redis-master-0    1/1     Running   0          128m
+my-redis-replica-0   1/1     Running   0          128m
+my-redis-replica-1   1/1     Running   0          128m
+SSH: Connecting from host [jenkins-server]
+SSH: Connecting with configuration [Kubernetes] ...
+SSH: Disconnecting configuration [Kubernetes] ...
+SSH: Transferred 1 file(s)
+Finished: SUCCESS
+```
